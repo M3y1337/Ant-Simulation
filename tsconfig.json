@@ -1,9 +1,0 @@
-{
-    "compilerOptions": {
-        "target": "ES6",
-        "removeComments": false,
-        "rootDir": "src/ts",
-        "outDir": "src/js"
-    },
-    "compileOnSave": true
-}

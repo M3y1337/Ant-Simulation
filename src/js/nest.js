@@ -13,15 +13,14 @@ export class Nest {
         for (let i = 0; i < antAmount; i++)
             this.ants.push(new Ant(x, y, i * spacing, this));
     }
-    draw(ctx) {
-        ctx.fillStyle = "#ce5114";
-        ctx.beginPath();
-        ctx.arc(this.pos.x, this.pos.y, this.radius, 0, 2 * Math.PI, false);
-        ctx.fill();
-        ctx.fillStyle = "white";
-        ctx.font = "30px sans-serif";
-        ctx.textAlign = "center";
-        ctx.fillText(`${this.counter}`, this.pos.x, this.pos.y + 8);
+    draw(p) {
+        p.noStroke();
+        p.fill("#ce5114");
+        p.circle(this.pos.x, this.pos.y, this.radius * 2);
+        p.fill(255);
+        p.textAlign(p.CENTER, p.CENTER);
+        p.textSize(30);
+        p.text(`${this.counter}`, this.pos.x, this.pos.y);
     }
     spawnFood(x, y, radius) {
         for (let i = -radius; i < radius; i += 10) {

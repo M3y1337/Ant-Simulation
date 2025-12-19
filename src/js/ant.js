@@ -3,15 +3,14 @@ import { Global } from "./global.js";
 import { Rectangle } from "./quadtree.js";
 import { Vector, fromAngle, clone } from "./vector.js";
 import { lineCollision, dist } from "./helper.js";
-const canvas = document.getElementById("canvas");
-const pheromoneFrameSpacing = 2;
+import { Config } from "./config.js";
 export class Ant {
     constructor(x, y, direction, nest) {
         this.hasFood = false;
         this.movingToFood = false;
-        this.framesUntilPheromone = pheromoneFrameSpacing;
-        this.speed = 10;
-        this.sight = 100;
+        this.framesUntilPheromone = Config.antPheromoneFrequency;
+        this.speed = Config.antSpeed;
+        this.sight = Config.antSight;
         this.FoV = 3 * Math.PI / 4;
         this.steeringStrength = 0.6;
         this.pos = new Vector(x, y);
@@ -19,22 +18,21 @@ export class Ant {
         this.desiredVel = clone(this.velocity);
         this.nest = nest;
     }
-    draw(ctx) {
-        ctx.fillStyle = "#ffffff";
-        const { x, y } = this.pos;
+    draw(p) {
         const h = 30;
         const w = 20;
-        const normalized = this.velocity.normalize();
-        const vector1 = normalized.rotate(Math.PI);
-        const vector2 = normalized.rotate(-Math.PI / 2);
-        const vector3 = normalized.rotate(-3 * Math.PI / 2);
-        ctx.beginPath();
-        ctx.moveTo(x, y); // Point 1
-        ctx.lineTo(// Point 2
-        x + h * vector1.x + (w / 2) * vector2.x, y + h * vector1.y + (w / 2) * vector2.y);
-        ctx.lineTo(// Point 3
-        x + h * vector1.x + (w / 2) * vector3.x, y + h * vector1.y + (w / 2) * vector3.y);
-        ctx.fill();
+        const angle = Math.atan2(this.velocity.y, this.velocity.x);
+        p.push();
+        p.translate(this.pos.x, this.pos.y);
+        p.rotate(angle);
+        p.noStroke();
+        p.fill(255);
+        p.beginShape();
+        p.vertex(0, 0);
+        p.vertex(-h, -w / 2);
+        p.vertex(-h, w / 2);
+        p.endShape(p.CLOSE);
+        p.pop();
     }
     steer() {
         // Check for food in the ant's FoV
@@ -80,7 +78,7 @@ export class Ant {
                 Global.redPheromones.insert(new Pheromone(this.pos.x, this.pos.y, PheromoneType.RED));
             else
                 Global.bluePheromones.insert(new Pheromone(this.pos.x, this.pos.y, PheromoneType.BLUE));
-            this.framesUntilPheromone = pheromoneFrameSpacing;
+            this.framesUntilPheromone = Config.antPheromoneFrequency;
         }
         else
             this.framesUntilPheromone--;
@@ -96,11 +94,13 @@ export class Ant {
         let minDist = Infinity;
         let closest;
         let index = -1;
-        const pool = Global.food.query(new Rectangle(this.pos.x, this.pos.y, 150, 150));
+        const foodRange = new Rectangle(this.pos.x, this.pos.y, this.sight, this.sight);
+        const pool = Global.food.query(foodRange);
         for (let i = 0; i < pool.length; i++) {
             const distance = dist(this.pos.x, this.pos.y, pool[i].value.pos.x, pool[i].value.pos.y);
             if (distance < minDist) {
-                // Check for collisions
+                // Check for collisions against all obstacles (more robust than spatially
+                // filtering by obstacle midpoint, which can miss long segments like borders)
                 let collided = false;
                 for (let j of Global.obstacles) {
                     if (lineCollision(this.pos.x, this.pos.y, pool[i].value.pos.x, pool[i].value.pos.y, j.x1, j.y1, j.x2, j.y2))
@@ -126,18 +126,11 @@ export class Ant {
         }
     }
     countPheromones() {
-        const sensorAngle = this.FoV / 2;
-        const otherAngle = (Math.PI - sensorAngle) / 2;
-        const pointDistance = this.sight * Math.sin(sensorAngle) / Math.sin(otherAngle);
-        const sensorRadius = Math.floor(pointDistance) / 2;
-        const sensors = [
-            this.pos.add(this.desiredVel.rotate(-sensorAngle).scalarMultiply(this.sight)),
-            this.pos.add(this.desiredVel.scalarMultiply(this.sight)),
-            this.pos.add(this.desiredVel.rotate(sensorAngle).scalarMultiply(this.sight))
-        ];
+        const { sensors, sensorRadius } = this.getSensorInfo();
         const scores = [0, 0, 0];
         const pool = this.hasFood ? Global.bluePheromones : Global.redPheromones;
-        for (let i of pool.query(new Rectangle(this.pos.x, this.pos.y, 150, 150))) {
+        const pheromoneRange = new Rectangle(this.pos.x, this.pos.y, this.sight, this.sight);
+        for (let i of pool.query(pheromoneRange)) {
             const pheromone = i.value;
             const distances = [];
             for (let j of sensors)
@@ -148,6 +141,31 @@ export class Ant {
             }
         }
         return scores;
+    }
+    getSensorInfo() {
+        const sensorAngle = this.FoV / 2;
+        const otherAngle = (Math.PI - sensorAngle) / 2;
+        const pointDistance = this.sight * Math.sin(sensorAngle) / Math.sin(otherAngle);
+        const sensorRadius = Math.floor(pointDistance) / 2;
+        const sensors = [
+            this.pos.add(this.desiredVel.rotate(-sensorAngle).scalarMultiply(this.sight)),
+            this.pos.add(this.desiredVel.scalarMultiply(this.sight)),
+            this.pos.add(this.desiredVel.rotate(sensorAngle).scalarMultiply(this.sight))
+        ];
+        return { sensors, sensorRadius };
+    }
+    // Debug helper for visualizing pheromone sensors
+    debugDrawSensors(p) {
+        const { sensors, sensorRadius } = this.getSensorInfo();
+        p.push();
+        p.noFill();
+        p.stroke(0, 255, 255, 128);
+        p.strokeWeight(1);
+        for (let sensor of sensors) {
+            p.line(this.pos.x, this.pos.y, sensor.x, sensor.y);
+            p.circle(sensor.x, sensor.y, sensorRadius * 2);
+        }
+        p.pop();
     }
     avoidObstacles() {
         // Scan routes starting from the desired direction and check if it collides
@@ -166,8 +184,8 @@ export class Ant {
                 y2: sightEnd.y
             };
             let collided = false;
-            for (let i of Global.obstacles) {
-                const collision = lineCollision(line.x1, line.y1, line.x2, line.y2, i.x1, i.y1, i.x2, i.y2);
+            for (let o of Global.obstacles) {
+                const collision = lineCollision(line.x1, line.y1, line.x2, line.y2, o.x1, o.y1, o.x2, o.y2);
                 if (collision)
                     collided = true;
             }

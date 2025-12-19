@@ -1,4 +1,5 @@
 import { Vector } from "./vector.js";
+import { Config } from "./config.js";
 export var PheromoneType;
 (function (PheromoneType) {
     PheromoneType[PheromoneType["BLUE"] = 0] = "BLUE";
@@ -6,19 +7,22 @@ export var PheromoneType;
 })(PheromoneType || (PheromoneType = {}));
 export class Pheromone {
     constructor(x, y, type) {
-        this.lifeAmount = 500;
+        this.lifeAmount = Config.pheromoneLife;
         this.life = this.lifeAmount;
         this.pos = new Vector(x, y);
         this.type = type;
     }
-    draw(ctx) {
-        let alpha = this.life / this.lifeAmount;
-        if (this.type === PheromoneType.BLUE)
-            ctx.fillStyle = `rgba(66, 135, 245, ${alpha})`;
-        else
-            ctx.fillStyle = `rgba(253, 33, 8, ${alpha})`;
-        ctx.beginPath();
-        ctx.arc(this.pos.x, this.pos.y, 3, 0, 2 * Math.PI, false);
-        ctx.fill();
+    draw(p) {
+        const alpha = (this.life / this.lifeAmount) * 255;
+        if (this.type === PheromoneType.BLUE) {
+            p.noStroke();
+            p.fill(66, 135, 245, alpha);
+        }
+        else {
+            p.noStroke();
+            p.fill(253, 33, 8, alpha);
+        }
+        // Diameter is 2 * radius (3)
+        p.circle(this.pos.x, this.pos.y, 6);
     }
 }

@@ -4,9 +4,80 @@
         <title>Ant Simulation</title>
 
         <link rel="stylesheet" href="styles.css">
+        <script src="https://cdn.jsdelivr.net/npm/p5@1.11.0/lib/p5.min.js"></script>
     </head>
     <body>
+        <div id="ui-panel">
+            <h1>Ant Simulation</h1>
+
+            <div class="control">
+                <label>FPS</label>
+                <span id="fpsValue" class="value"></span>
+            </div>
+
+            <div class="control">
+                <label for="antCount">Ant count</label>
+                <input id="antCount" type="range" min="10" max="300" step="1">
+                <span id="antCountValue" class="value"></span>
+            </div>
+
+            <div class="control">
+                <label for="antSpeed">Ant speed</label>
+                <input id="antSpeed" type="range" min="1" max="30" step="1">
+                <span id="antSpeedValue" class="value"></span>
+            </div>
+
+            <div class="control">
+                <label for="antSight">Sight radius</label>
+                <input id="antSight" type="range" min="20" max="300" step="5">
+                <span id="antSightValue" class="value"></span>
+            </div>
+
+            <div class="control">
+                <label for="pheromoneLife">Pheromone lifetime</label>
+                <input id="pheromoneLife" type="range" min="100" max="2000" step="50">
+                <span id="pheromoneLifeValue" class="value"></span>
+            </div>
+
+            <div class="control">
+                <label for="foodRadius">Food radius</label>
+                <input id="foodRadius" type="range" min="10" max="150" step="1">
+                <span id="foodRadiusValue" class="value"></span>
+            </div>
+
+            <div class="control">
+                <label for="bgColor">Background color</label>
+                <input id="bgColor" type="color">
+            </div>
+
+            <div class="control">
+                <label><input id="showPheromones" type="checkbox"> Show pheromones</label>
+            </div>
+
+            <div class="control">
+                <label><input id="showObstacles" type="checkbox"> Show obstacles</label>
+            </div>
+
+            <div class="control">
+                <label><input id="showHUD" type="checkbox"> Show HUD</label>
+            </div>
+
+            <div class="control">
+                <label><input id="debugSensors" type="checkbox"> Debug: Sensors (D)</label>
+            </div>
+
+            <div class="control">
+                <label><input id="debugQuadTree" type="checkbox"> Debug: QuadTree (Q)</label>
+            </div>
+
+            <div class="control buttons">
+                <button id="pauseButton" type="button">Pause</button>
+                <button id="stepButton" type="button">Step</button>
+                <button id="resetButton" type="button">Reset</button>
+            </div>
+        </div>
+
         <canvas id="canvas"></canvas>
-        <script type="module" src="src/js/index.js"></script>
+        <script type="module" src="src/js/sketch.js"></script>
     </body>
 </html>
