@@ -29,20 +29,25 @@ export class Ant {
         const vector2 = normalized.rotate(-Math.PI / 2);
         const vector3 = normalized.rotate(-3 * Math.PI / 2);
         ctx.beginPath();
-        ctx.moveTo(x, y);
-        ctx.lineTo(x + h * vector1.x + (w / 2) * vector2.x, y + h * vector1.y + (w / 2) * vector2.y);
-        ctx.lineTo(x + h * vector1.x + (w / 2) * vector3.x, y + h * vector1.y + (w / 2) * vector3.y);
+        ctx.moveTo(x, y); // Point 1
+        ctx.lineTo(// Point 2
+        x + h * vector1.x + (w / 2) * vector2.x, y + h * vector1.y + (w / 2) * vector2.y);
+        ctx.lineTo(// Point 3
+        x + h * vector1.x + (w / 2) * vector3.x, y + h * vector1.y + (w / 2) * vector3.y);
         ctx.fill();
     }
     steer() {
+        // Check for food in the ant's FoV
         if (!this.hasFood)
             this.findFood();
         else {
+            // Check if nest is in radius
             if (dist(this.pos.x, this.pos.y, this.nest.pos.x, this.nest.pos.y) < this.nest.radius + this.sight) {
                 const bearing = new Vector(this.nest.pos.x - this.pos.x, this.nest.pos.y - this.pos.y);
                 this.desiredVel = bearing.normalize();
             }
         }
+        // Check for pheromones
         if (!this.movingToFood) {
             const [FL, F, FR] = this.countPheromones();
             if ((F > FL) && (F > FR)) { }
@@ -52,10 +57,13 @@ export class Ant {
                 this.desiredVel.rotate(this.FoV / 2, true);
             else { }
         }
+        // Avoid obstacles
         this.avoidObstacles();
+        // Slight random wander
         const wanderStrength = 0.05;
         const angle = Math.random() * 2 * Math.PI - Math.PI;
         this.desiredVel.rotate(angle * wanderStrength, true);
+        // Steer the ant
         this.applySteer();
     }
     move() {
@@ -92,6 +100,7 @@ export class Ant {
         for (let i = 0; i < pool.length; i++) {
             const distance = dist(this.pos.x, this.pos.y, pool[i].value.pos.x, pool[i].value.pos.y);
             if (distance < minDist) {
+                // Check for collisions
                 let collided = false;
                 for (let j of Global.obstacles) {
                     if (lineCollision(this.pos.x, this.pos.y, pool[i].value.pos.x, pool[i].value.pos.y, j.x1, j.y1, j.x2, j.y2))
@@ -141,12 +150,14 @@ export class Ant {
         return scores;
     }
     avoidObstacles() {
+        // Scan routes starting from the desired direction and check if it collides
         const spacing = Math.PI / 12;
         for (let i = 0; i < 2 * Math.PI / spacing; i++) {
             let multiplier = -i / 2;
             if (i % 2 !== 0)
                 multiplier = (i + 1) / 2;
             const newVelocity = this.desiredVel.rotate(multiplier * spacing);
+            // Check for any obstacles
             const sightEnd = this.pos.add(newVelocity.scalarMultiply(this.sight));
             const line = {
                 x1: this.pos.x,
@@ -160,6 +171,7 @@ export class Ant {
                 if (collision)
                     collided = true;
             }
+            // If no collision, break and set the velocity
             if (!collided) {
                 this.desiredVel = newVelocity;
                 break;

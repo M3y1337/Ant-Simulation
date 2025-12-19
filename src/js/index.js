@@ -18,9 +18,11 @@ for (let i = 0; i < 3; i++) {
 let mousePos = new Vector(0, 0);
 function draw() {
     requestAnimationFrame(draw);
+    // Background
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = "#242424";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // Pheromones
     let pheromones = [Global.redPheromones, Global.bluePheromones];
     for (let i of pheromones) {
         const pool = i.query(new Rectangle(width / 2, height / 2, width / 2, height / 2));
@@ -32,9 +34,11 @@ function draw() {
                 pool[j].value.draw(ctx);
         }
     }
+    // Food
     const pool = Global.food.query(new Rectangle(width / 2, height / 2, width / 2, height / 2));
     for (let i of pool)
         i.value.draw(ctx);
+    // Obstacles
     if (Global.isBeingDragged) {
         Global.obstacles[Global.obstacles.length - 1].x2 = mousePos.x;
         Global.obstacles[Global.obstacles.length - 1].y2 = mousePos.y;
@@ -47,11 +51,13 @@ function draw() {
         ctx.lineTo(i.x2, i.y2);
         ctx.stroke();
     }
+    // Ants
     for (let i of nest.ants) {
         i.steer();
         i.move();
         i.draw(ctx);
     }
+    // Nest
     nest.draw(ctx);
     ctx.font = "24px sans-serif";
     ctx.textAlign = "end";

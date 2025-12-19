@@ -9,8 +9,10 @@ export const Global = {
     tool: 0,
     isBeingDragged: false,
     obstacles: [
+        // Horizontal
         { x1: 0, y1: 0, x2: width, y2: 0 },
         { x1: 0, y1: height, x2: width, y2: height },
+        // Vertical
         { x1: 0, y1: 0, x2: 0, y2: height },
         { x1: width, y1: 0, x2: width, y2: height },
     ]
