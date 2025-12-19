@@ -1,4 +1,4 @@
-import { Global } from "./global.js";
+import { Global, rebuildObstacleGrid } from "./global.js";
 import { Nest } from "./nest.js";
 import { QuadTree, Rectangle } from "./quadtree.js";
 import { Vector } from "./vector.js";
@@ -59,6 +59,7 @@ function initSimulation(p) {
     for (const o of Global.obstacles) {
         Global.obstacleTree.insert(o);
     }
+    rebuildObstacleGrid();
     // Reset local state
     const antCount = Config.antCount;
     nest = new Nest(width / 2, height / 2, antCount);
@@ -119,17 +120,73 @@ function drawQuadTreeBounds(p, tree, strokeColor) {
 function renderSimulation(p) {
     // Background
     p.background(Config.backgroundColor);
-    // Pheromones
+    // Pheromones (visually merged into nearby clusters)
     if (Config.showPheromones) {
+        const cellSize = 8; // pixels
+        const redCells = new Map();
+        const blueCells = new Map();
+        const accumulatePhero = (map, elem) => {
+            const ph = elem.value;
+            const cx = Math.floor(ph.pos.x / cellSize);
+            const cy = Math.floor(ph.pos.y / cellSize);
+            const key = cx + "," + cy;
+            const normLife = ph.lifeAmount > 0 ? ph.life / ph.lifeAmount : 0;
+            let bucket = map.get(key);
+            if (!bucket) {
+                bucket = { xSum: 0, ySum: 0, count: 0, intensitySum: 0 };
+                map.set(key, bucket);
+            }
+            bucket.xSum += ph.pos.x;
+            bucket.ySum += ph.pos.y;
+            bucket.count += 1;
+            bucket.intensitySum += normLife;
+        };
+        for (let elem of visibleRedPheromones) accumulatePhero(redCells, elem);
+        for (let elem of visibleBluePheromones) accumulatePhero(blueCells, elem);
+
         p.noStroke();
-        for (let elem of visibleRedPheromones)
-            elem.value.draw(p);
-        for (let elem of visibleBluePheromones)
-            elem.value.draw(p);
+        const drawPheroBuckets = (map, r, g, b) => {
+            for (const bucket of map.values()) {
+                const x = bucket.xSum / bucket.count;
+                const y = bucket.ySum / bucket.count;
+                const avgIntensity = bucket.intensitySum / bucket.count;
+                const alpha = Math.min(255, avgIntensity * 255 * Math.min(3, bucket.count));
+                if (alpha < 5) continue; // too faint to matter
+                const radius = 3 + Math.min(5, Math.sqrt(bucket.count));
+                p.fill(r, g, b, alpha);
+                p.circle(x, y, radius * 2);
+            }
+        };
+        drawPheroBuckets(redCells, 253, 33, 8);
+        drawPheroBuckets(blueCells, 66, 135, 245);
     }
-    // Food
-    for (let elem of visibleFood)
-        elem.value.draw(p);
+    // Food (visually merged into nearby clusters)
+    {
+        const cellSize = 8; // pixels
+        const foodCells = new Map();
+        for (let elem of visibleFood) {
+            const food = elem.value;
+            const cx = Math.floor(food.pos.x / cellSize);
+            const cy = Math.floor(food.pos.y / cellSize);
+            const key = cx + "," + cy;
+            let bucket = foodCells.get(key);
+            if (!bucket) {
+                bucket = { xSum: 0, ySum: 0, count: 0 };
+                foodCells.set(key, bucket);
+            }
+            bucket.xSum += food.pos.x;
+            bucket.ySum += food.pos.y;
+            bucket.count += 1;
+        }
+        p.noStroke();
+        p.fill(0, 255, 0);
+        for (const bucket of foodCells.values()) {
+            const x = bucket.xSum / bucket.count;
+            const y = bucket.ySum / bucket.count;
+            const radius = 3 + Math.min(7, Math.sqrt(bucket.count));
+            p.circle(x, y, radius * 2);
+        }
+    }
     // Obstacles
     if (Config.showObstacles) {
         p.stroke("#ffaf00");
@@ -283,7 +340,12 @@ const sketch = (p) => {
         }
     };
     p.mouseReleased = () => {
-        Global.isBeingDragged = false;
+        if (Global.isBeingDragged) {
+            Global.isBeingDragged = false;
+            rebuildObstacleGrid();
+        } else {
+            Global.isBeingDragged = false;
+        }
     };
 };
 new p5(sketch);

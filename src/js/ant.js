@@ -1,5 +1,5 @@
 import { Pheromone, PheromoneType } from "./pheromone.js";
-import { Global } from "./global.js";
+import { Global, getObstaclesNearLine } from "./global.js";
 import { Rectangle } from "./quadtree.js";
 import { Vector, fromAngle, clone } from "./vector.js";
 import { lineCollision, dist } from "./helper.js";
@@ -101,8 +101,9 @@ export class Ant {
             if (distance < minDist) {
                 // Check for collisions against all obstacles (more robust than spatially
                 // filtering by obstacle midpoint, which can miss long segments like borders)
+                const obstacles = getObstaclesNearLine(this.pos.x, this.pos.y, pool[i].value.pos.x, pool[i].value.pos.y);
                 let collided = false;
-                for (let j of Global.obstacles) {
+                for (let j of obstacles) {
                     if (lineCollision(this.pos.x, this.pos.y, pool[i].value.pos.x, pool[i].value.pos.y, j.x1, j.y1, j.x2, j.y2))
                         collided = true;
                 }
@@ -183,8 +184,9 @@ export class Ant {
                 x2: sightEnd.x,
                 y2: sightEnd.y
             };
+            const obstacles = getObstaclesNearLine(line.x1, line.y1, line.x2, line.y2);
             let collided = false;
-            for (let o of Global.obstacles) {
+            for (let o of obstacles) {
                 const collision = lineCollision(line.x1, line.y1, line.x2, line.y2, o.x1, o.y1, o.x2, o.y2);
                 if (collision)
                     collided = true;
