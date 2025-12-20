@@ -8,11 +8,12 @@
     </head>
     <body>
         <div id="ui-panel">
-            <h1>Ant Simulation</h1>
-
-            <div class="control">
-                <label>FPS</label>
-                <span id="fpsValue" class="value"></span>
+            <div class="ui-header">
+                <h1>Ant Simulation</h1>
+                <div class="fps-display">
+                    <span>FPS:</span>
+                    <span id="fpsValue" class="value"></span>
+                </div>
             </div>
 
             <div class="control">
@@ -28,9 +29,33 @@
             </div>
 
             <div class="control">
-                <label for="antSight">Sight radius</label>
+                <label for="antSteeringStrength">Steering strength</label>
+                <input id="antSteeringStrength" type="range" min="0" max="2" step="0.05">
+                <span id="antSteeringStrengthValue" class="value"></span>
+            </div>
+
+            <div class="control">
+                <label for="antFoV">FoV</label>
+                <input id="antFoV" type="range" min="30" max="180" step="5">
+                <span id="antFoVValue" class="value"></span>
+            </div>
+
+            <div class="control">
+                <label for="antWanderStrength">Wander strength</label>
+                <input id="antWanderStrength" type="range" min="0" max="0.2" step="0.005">
+                <span id="antWanderStrengthValue" class="value"></span>
+            </div>
+
+            <div class="control">
+                <label for="antSight">Sight</label>
                 <input id="antSight" type="range" min="20" max="300" step="5">
                 <span id="antSightValue" class="value"></span>
+            </div>
+
+            <div class="control">
+                <label for="simulationSpeed">Simulation speed</label>
+                <input id="simulationSpeed" type="range" min="0.1" max="3" step="0.1">
+                <span id="simulationSpeedValue" class="value"></span>
             </div>
 
             <div class="control">
@@ -40,13 +65,59 @@
             </div>
 
             <div class="control">
+                <label for="pheromoneLowScoreThreshold">Pheromone low-score threshold</label>
+                <input id="pheromoneLowScoreThreshold" type="range" min="0" max="1" step="0.01">
+                <span id="pheromoneLowScoreThresholdValue" class="value"></span>
+            </div>
+
+            <div class="control">
+                <label for="pheromoneIgnoreProbability">Ignore weak pheromones (probability)</label>
+                <input id="pheromoneIgnoreProbability" type="range" min="0" max="1" step="0.05">
+                <span id="pheromoneIgnoreProbabilityValue" class="value"></span>
+            </div>
+
+            <div class="control">
+                <label><input id="pheromoneDiffusion" type="checkbox"> Enable pheromone diffusion</label>
+            </div>
+
+            <div class="control">
+                <label for="pheromoneDiffusionStrength">Pheromone diffusion strength</label>
+                <input id="pheromoneDiffusionStrength" type="range" min="0" max="2" step="0.1">
+                <span id="pheromoneDiffusionStrengthValue" class="value"></span>
+            </div>
+
+            <div class="control">
+                <label><input id="searchersFollowHomePheromones" type="checkbox"> Searchers follow home pheromones</label>
+            </div>
+
+            <div class="control">
+                <label for="searcherHomePheromoneWeight">Home pheromone weight (searchers)</label>
+                <input id="searcherHomePheromoneWeight" type="range" min="0" max="2" step="0.1">
+                <span id="searcherHomePheromoneWeightValue" class="value"></span>
+            </div>
+
+            <div class="control">
                 <label for="foodRadius">Food radius</label>
                 <input id="foodRadius" type="range" min="10" max="150" step="1">
                 <span id="foodRadiusValue" class="value"></span>
             </div>
 
             <div class="control">
-                <label for="bgColor">Background color</label>
+                <label for="foodClusterCellSize">Food cluster cell size</label>
+                <input id="foodClusterCellSize" type="range" min="2" max="20" step="2">
+                <span id="foodClusterCellSizeValue" class="value"></span>
+            </div>
+
+            <div class="control">
+                <label><input id="useClusteredFood" type="checkbox"> Use clustered food rendering</label>
+            </div>
+
+            <div class="control">
+                <label><input id="showFoodCounts" type="checkbox"> Show food counts on clusters</label>
+            </div>
+
+            <div class="control control-inline">
+                <label for="bgColor">Background color:</label>
                 <input id="bgColor" type="color">
             </div>
 
@@ -55,11 +126,25 @@
             </div>
 
             <div class="control">
-                <label><input id="showObstacles" type="checkbox"> Show obstacles</label>
+                <label for="pheromoneClusterCellSize">Pheromone cluster cell size</label>
+                <input id="pheromoneClusterCellSize" type="range" min="2" max="20" step="2">
+                <span id="pheromoneClusterCellSizeValue" class="value"></span>
             </div>
 
             <div class="control">
-                <label><input id="showHUD" type="checkbox"> Show HUD</label>
+                <label><input id="useClusteredPheromones" type="checkbox"> Use clustered pheromone rendering</label></label>
+            </div>
+
+            <div class="control">
+                <label><input id="useRedPheromones" type="checkbox"> Use food pheromones (red)</label>
+            </div>
+
+            <div class="control">
+                <label><input id="useBluePheromones" type="checkbox"> Use home pheromones (blue)</label>
+            </div>
+
+            <div class="control">
+                <label><input id="showObstacles" type="checkbox"> Show obstacles</label>
             </div>
 
             <div class="control">
@@ -70,10 +155,25 @@
                 <label><input id="debugQuadTree" type="checkbox"> Debug: QuadTree (Q)</label>
             </div>
 
+            <div class="control">
+                <label><input id="debugAntState" type="checkbox"> Debug: Ant state (A)</label>
+            </div>
+
             <div class="control buttons">
                 <button id="pauseButton" type="button">Pause</button>
                 <button id="stepButton" type="button">Step</button>
                 <button id="resetButton" type="button">Reset</button>
+            </div>
+
+            <div class="control" id="hudHelp">
+                <label>Controls / Hotkeys</label>
+                <div class="hud-lines">
+                    <div>F - Food, O - Obstacles</div>
+                    <div>R - Reset, P - Pause/Resume</div>
+                    <div>D - Sensors, Q - QuadTree, A - Ant state</div>
+                    <div>U - Toggle UI</div>
+                    <div>S - Save PNG</div>
+                </div>
             </div>
         </div>
 

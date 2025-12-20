@@ -1,6 +1,6 @@
 import { Vector } from "./vector.js";
 import { Ant } from "./ant.js";
-import { dist } from "./helper.js";
+import { distSquared } from "./helper.js";
 import { Global } from "./global.js";
 import { Food } from "./food.js";
 export class Nest {
@@ -25,7 +25,7 @@ export class Nest {
     spawnFood(x, y, radius) {
         for (let i = -radius; i < radius; i += 10) {
             for (let j = -radius; j < radius; j += 10) {
-                if (dist(x, y, x + i, y + j) < radius)
+                if (distSquared(x, y, x + i, y + j) < radius * radius)
                     Global.food.insert(new Food(x + i, y + j));
             }
         }

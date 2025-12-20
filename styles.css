@@ -26,9 +26,23 @@ body {
   min-width: 220px;
 }
 
+#ui-panel .ui-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
 #ui-panel h1 {
-  margin: 0 0 8px 0;
+  margin: 0;
   font-size: 16px;
+}
+
+#ui-panel .fps-display {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
 }
 
 #ui-panel .control {
@@ -39,6 +53,17 @@ body {
 #ui-panel .control label {
   display: block;
   margin-bottom: 2px;
+}
+
+#ui-panel .control.control-inline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+#ui-panel .control.control-inline label {
+  display: inline-block;
+  margin-bottom: 0;
 }
 
 #ui-panel .control.buttons {
@@ -61,4 +86,3 @@ body {
 #ui-panel .value {
   margin-left: 4px;
 }
-/*# sourceMappingURL=styles.css.map */

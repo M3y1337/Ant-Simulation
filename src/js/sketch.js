@@ -1,9 +1,12 @@
-import { Global, rebuildObstacleGrid } from "./global.js";
+import { Global } from "./global.js";
 import { Nest } from "./nest.js";
 import { QuadTree, Rectangle } from "./quadtree.js";
 import { Vector } from "./vector.js";
 import { Config } from "./config.js";
 import { setupUI, syncPauseUI, syncDebugUI, updateFPSUI, setUIPanelVisible, syncHUDUI } from "./ui.js";
+import { renderClusteredPheromones, renderClusteredFood } from "./rendering.js";
+import { rebuildObstacleGrid, drawObstacles } from "./obstacle.js";
+import { Camera } from "./Camera.js";
 // Simulation state
 let nest;
 let mousePos;
@@ -14,11 +17,17 @@ let visibleBluePheromones = [];
 // Debug flags
 const Debug = {
     sensors: false,
-    quadTree: false
+    quadTree: false,
+    antState: false,
 };
 let isPaused = false;
 let pendingStep = false;
 let uiVisible = true;
+let camera = null;
+let isPanning = false;
+let lastPanMouseX = 0;
+let lastPanMouseY = 0;
+let simStepAccumulator = 0;
 
 function isEventOnUI(event) {
     if (!event)
@@ -35,48 +44,49 @@ function isEventOnUI(event) {
 // Keep reference to current p5 instance for UI callbacks
 let currentP = null;
 function initSimulation(p) {
-    const width = p.width;
-    const height = p.height;
+    const worldWidth = Config.simulationWidth || p.width;
+    const worldHeight = Config.simulationHeight || p.height;
     // Reset globals
-    const fullFoodRect = new Rectangle(width / 2, height / 2, width / 2, height / 2);
-    const fullPheromoneRect = new Rectangle(width / 2, height / 2, width / 2, height / 2);
-    Global.food = new QuadTree(fullFoodRect, 4);
-    Global.redPheromones = new QuadTree(fullPheromoneRect, 4);
-    Global.bluePheromones = new QuadTree(fullPheromoneRect, 4);
+    const fullFoodRect = new Rectangle(worldWidth / 2, worldHeight / 2, worldWidth / 2, worldHeight / 2);
+    const fullPheromoneRect = new Rectangle(worldWidth / 2, worldHeight / 2, worldWidth / 2, worldHeight / 2);
+    const capacity = Config.quadTreeCapacity || 4;
+    Global.food = new QuadTree(fullFoodRect, capacity);
+    Global.redPheromones = new QuadTree(fullPheromoneRect, capacity);
+    Global.bluePheromones = new QuadTree(fullPheromoneRect, capacity);
     Global.tool = 0;
     Global.isBeingDragged = false;
     Global.obstacles = [
         // Horizontal borders
-        { x1: 0, y1: 0, x2: width, y2: 0, pos: { x: width / 2, y: 0 } },
-        { x1: 0, y1: height, x2: width, y2: height, pos: { x: width / 2, y: height } },
+        { x1: 0, y1: 0, x2: worldWidth, y2: 0, pos: { x: worldWidth / 2, y: 0 } },
+        { x1: 0, y1: worldHeight, x2: worldWidth, y2: worldHeight, pos: { x: worldWidth / 2, y: worldHeight } },
         // Vertical borders
-        { x1: 0, y1: 0, x2: 0, y2: height, pos: { x: 0, y: height / 2 } },
-        { x1: width, y1: 0, x2: width, y2: height, pos: { x: width, y: height / 2 } }
+        { x1: 0, y1: 0, x2: 0, y2: worldHeight, pos: { x: 0, y: worldHeight / 2 } },
+        { x1: worldWidth, y1: 0, x2: worldWidth, y2: worldHeight, pos: { x: worldWidth, y: worldHeight / 2 } }
     ];
 
-    const fullObstacleRect = new Rectangle(width / 2, height / 2, width / 2, height / 2);
-    Global.obstacleTree = new QuadTree(fullObstacleRect, 4);
+    const fullObstacleRect = new Rectangle(worldWidth / 2, worldHeight / 2, worldWidth / 2, worldHeight / 2);
+    Global.obstacleTree = new QuadTree(fullObstacleRect, capacity);
     for (const o of Global.obstacles) {
         Global.obstacleTree.insert(o);
     }
     rebuildObstacleGrid();
     // Reset local state
     const antCount = Config.antCount;
-    nest = new Nest(width / 2, height / 2, antCount);
+    nest = new Nest(worldWidth / 2, worldHeight / 2, antCount);
     // Spawn food as in the original index.ts
     for (let i = 0; i < 3; i++) {
-        nest.spawnFood(width / 4, height / 4, Config.foodSpawnRadius);
-        nest.spawnFood(3 * width / 4, height / 4, Config.foodSpawnRadius);
-        nest.spawnFood(width / 4, 3 * height / 4, Config.foodSpawnRadius);
-        nest.spawnFood(3 * width / 4, 3 * height / 4, Config.foodSpawnRadius);
+        nest.spawnFood(worldWidth / 4, worldHeight / 4, Config.foodSpawnRadius);
+        nest.spawnFood(3 * worldWidth / 4, worldHeight / 4, Config.foodSpawnRadius);
+        nest.spawnFood(worldWidth / 4, 3 * worldHeight / 4, Config.foodSpawnRadius);
+        nest.spawnFood(3 * worldWidth / 4, 3 * worldHeight / 4, Config.foodSpawnRadius);
     }
     mousePos = new Vector(0, 0);
 }
 function updateSimulation(p) {
-    const width = p.width;
-    const height = p.height;
+    const worldWidth = Config.simulationWidth || p.width;
+    const worldHeight = Config.simulationHeight || p.height;
     // Pheromones: age and flag expired
-    const pheromoneRect = new Rectangle(width / 2, height / 2, width / 2, height / 2);
+    const pheromoneRect = new Rectangle(worldWidth / 2, worldHeight / 2, worldWidth / 2, worldHeight / 2);
     visibleRedPheromones = Global.redPheromones.query(pheromoneRect, []);
     visibleBluePheromones = Global.bluePheromones.query(pheromoneRect, []);
     for (let pool of [visibleRedPheromones, visibleBluePheromones]) {
@@ -88,7 +98,7 @@ function updateSimulation(p) {
         }
     }
     // Food: cache visible set for rendering
-    const foodRect = new Rectangle(width / 2, height / 2, width / 2, height / 2);
+    const foodRect = new Rectangle(worldWidth / 2, worldHeight / 2, worldWidth / 2, worldHeight / 2);
     visibleFood = Global.food.query(foodRect, []);
     // Ant behavior and movement
     for (let ant of nest.ants) {
@@ -120,80 +130,39 @@ function drawQuadTreeBounds(p, tree, strokeColor) {
 function renderSimulation(p) {
     // Background
     p.background(Config.backgroundColor);
-    // Pheromones (visually merged into nearby clusters)
+    if (camera) {
+        camera.begin();
+    }
+    // Pheromones (optionally merged into nearby clusters)
     if (Config.showPheromones) {
-        const cellSize = 8; // pixels
-        const redCells = new Map();
-        const blueCells = new Map();
-        const accumulatePhero = (map, elem) => {
-            const ph = elem.value;
-            const cx = Math.floor(ph.pos.x / cellSize);
-            const cy = Math.floor(ph.pos.y / cellSize);
-            const key = cx + "," + cy;
-            const normLife = ph.lifeAmount > 0 ? ph.life / ph.lifeAmount : 0;
-            let bucket = map.get(key);
-            if (!bucket) {
-                bucket = { xSum: 0, ySum: 0, count: 0, intensitySum: 0 };
-                map.set(key, bucket);
+        if (Config.useClusteredPheromones) {
+            renderClusteredPheromones(p, visibleRedPheromones, visibleBluePheromones);
+        }
+        else {
+            for (const elem of visibleRedPheromones) {
+                elem.value.draw(p);
             }
-            bucket.xSum += ph.pos.x;
-            bucket.ySum += ph.pos.y;
-            bucket.count += 1;
-            bucket.intensitySum += normLife;
-        };
-        for (let elem of visibleRedPheromones) accumulatePhero(redCells, elem);
-        for (let elem of visibleBluePheromones) accumulatePhero(blueCells, elem);
-
-        p.noStroke();
-        const drawPheroBuckets = (map, r, g, b) => {
-            for (const bucket of map.values()) {
-                const x = bucket.xSum / bucket.count;
-                const y = bucket.ySum / bucket.count;
-                const avgIntensity = bucket.intensitySum / bucket.count;
-                const alpha = Math.min(255, avgIntensity * 255 * Math.min(3, bucket.count));
-                if (alpha < 5) continue; // too faint to matter
-                const radius = 3 + Math.min(5, Math.sqrt(bucket.count));
-                p.fill(r, g, b, alpha);
-                p.circle(x, y, radius * 2);
+            for (const elem of visibleBluePheromones) {
+                elem.value.draw(p);
             }
-        };
-        drawPheroBuckets(redCells, 253, 33, 8);
-        drawPheroBuckets(blueCells, 66, 135, 245);
+        }
     }
     // Food (visually merged into nearby clusters)
-    {
-        const cellSize = 8; // pixels
-        const foodCells = new Map();
-        for (let elem of visibleFood) {
-            const food = elem.value;
-            const cx = Math.floor(food.pos.x / cellSize);
-            const cy = Math.floor(food.pos.y / cellSize);
-            const key = cx + "," + cy;
-            let bucket = foodCells.get(key);
-            if (!bucket) {
-                bucket = { xSum: 0, ySum: 0, count: 0 };
-                foodCells.set(key, bucket);
-            }
-            bucket.xSum += food.pos.x;
-            bucket.ySum += food.pos.y;
-            bucket.count += 1;
-        }
+    if (Config.useClusteredFood) {
+        renderClusteredFood(p, visibleFood);
+    }
+    else {
+        // Fallback: draw individual food points when clustered mode is off.
         p.noStroke();
         p.fill(0, 255, 0);
-        for (const bucket of foodCells.values()) {
-            const x = bucket.xSum / bucket.count;
-            const y = bucket.ySum / bucket.count;
-            const radius = 3 + Math.min(7, Math.sqrt(bucket.count));
-            p.circle(x, y, radius * 2);
+        for (const elem of visibleFood) {
+            const food = elem.value;
+            p.circle(food.pos.x, food.pos.y, 4);
         }
     }
     // Obstacles
     if (Config.showObstacles) {
-        p.stroke("#ffaf00");
-        p.strokeWeight(5);
-        for (let seg of Global.obstacles) {
-            p.line(seg.x1, seg.y1, seg.x2, seg.y2);
-        }
+        drawObstacles(p);
     }
     // Ants
     for (let ant of nest.ants) {
@@ -201,17 +170,6 @@ function renderSimulation(p) {
     }
     // Nest
     nest.draw(p);
-    // HUD instructions
-    if (Config.showHUD) {
-        p.fill(255);
-        p.textAlign(p.RIGHT, p.CENTER);
-        p.textSize(16);
-        p.text("F - Food, O - Obstacles", p.width - 15, p.height - 24);
-        p.text("R - Reset, P - Pause/Resume", p.width - 15, p.height - 44);
-        p.text("D - Sensors, Q - QuadTree", p.width - 15, p.height - 64);
-        p.text("U - Toggle UI, H - Toggle HUD", p.width - 15, p.height - 84);
-        p.text("S - Save PNG", p.width - 15, p.height - 104);
-    }
     // Debug overlays
     if (Debug.quadTree) {
         drawQuadTreeBounds(p, Global.food, "rgba(0, 255, 0, 128)");
@@ -224,9 +182,18 @@ function renderSimulation(p) {
                 ant.debugDrawSensors(p);
         }
     }
-    // Simple FPS readout when any debug is on
+    if (Debug.antState) {
+        for (let ant of nest.ants) {
+            if (ant.debugDrawState)
+                ant.debugDrawState(p);
+        }
+    }
+    if (camera) {
+        camera.end();
+    }
+    // Simple FPS readout when any debug is on (screen-space)
     const fps = p.frameRate();
-    if (Debug.sensors || Debug.quadTree) {
+    if (Debug.sensors || Debug.quadTree || Debug.antState) {
         p.fill(255);
         p.textAlign(p.LEFT, p.TOP);
         p.textSize(16);
@@ -239,6 +206,12 @@ const sketch = (p) => {
     p.setup = () => {
         p.createCanvas(p.windowWidth, p.windowHeight);
         currentP = p;
+        camera = new Camera(p);
+        const mult = 1 + Config.camLiniency;
+        camera.setBounds(-Config.simulationWidth*mult, -Config.simulationHeight*mult, Config.simulationWidth/2*mult, Config.simulationHeight/2*mult);
+        camera.offset ={x: -Config.simulationWidth / 2, y: -Config.simulationHeight / 2};
+        // need to set these point-mirrored for some reason
+
         setupUI({
             getNest: () => nest,
             getDebug: () => Debug,
@@ -264,11 +237,17 @@ const sketch = (p) => {
     };
     p.draw = () => {
         if (pendingStep) {
+            // Single-step ignores simulationSpeed and just advances once.
             updateSimulation(p);
             pendingStep = false;
         }
         else if (!isPaused) {
-            updateSimulation(p);
+            const speed = Config.simulationSpeed || 1.0;
+            simStepAccumulator += speed;
+            while (simStepAccumulator >= 1.0) {
+                updateSimulation(p);
+                simStepAccumulator -= 1.0;
+            }
         }
         renderSimulation(p);
     };
@@ -295,6 +274,8 @@ const sketch = (p) => {
             Debug.sensors = !Debug.sensors;
         else if (p.key === "q" || p.key === "Q")
             Debug.quadTree = !Debug.quadTree;
+        else if (p.key === "a" || p.key === "A")
+            Debug.antState = !Debug.antState;
         else if (p.key === "u" || p.key === "U") {
             uiVisible = !uiVisible;
             setUIPanelVisible(uiVisible);
@@ -315,37 +296,68 @@ const sketch = (p) => {
         if (isEventOnUI(event)) {
             return;
         }
+        if (event.button === 1) {
+            // Middle mouse: start panning
+            isPanning = true;
+            lastPanMouseX = p.mouseX;
+            lastPanMouseY = p.mouseY;
+            return;
+        }
+        // Left mouse: interact with simulation in world space
+        const world = camera ? camera.screenToWorld(p.mouseX, p.mouseY) : { x: p.mouseX, y: p.mouseY };
         if (Global.tool === 0) {
-            nest.spawnFood(p.mouseX, p.mouseY, Config.foodSpawnRadius);
+            nest.spawnFood(world.x, world.y, Config.foodSpawnRadius);
         }
         else {
             Global.isBeingDragged = true;
-            mousePos.x = p.mouseX;
-            mousePos.y = p.mouseY;
+            mousePos.x = world.x;
+            mousePos.y = world.y;
             const obstacle = {
-                x1: p.mouseX, y1: p.mouseY,
-                x2: p.mouseX, y2: p.mouseY,
-                pos: { x: p.mouseX, y: p.mouseY },
+                x1: world.x, y1: world.y,
+                x2: world.x, y2: world.y,
+                pos: { x: world.x, y: world.y },
             };
             Global.obstacles.push(obstacle);
-            if (Global.obstacleTree) Global.obstacleTree.insert(obstacle);
+            if (Global.obstacleTree)
+                Global.obstacleTree.insert(obstacle);
         }
     };
-    p.mouseDragged = () => {
+    p.mouseDragged = (event) => {
+        if (isPanning && camera) {
+            const dx = p.mouseX - lastPanMouseX;
+            const dy = p.mouseY - lastPanMouseY;
+            camera.pan(dx, dy);
+            lastPanMouseX = p.mouseX;
+            lastPanMouseY = p.mouseY;
+            return;
+        }
         if (Global.isBeingDragged && Global.obstacles.length > 0) {
             const last = Global.obstacles[Global.obstacles.length - 1];
-            last.x2 = p.mouseX;
-            last.y2 = p.mouseY;
+            const world = camera ? camera.screenToWorld(p.mouseX, p.mouseY) : { x: p.mouseX, y: p.mouseY };
+            last.x2 = world.x;
+            last.y2 = world.y;
             last.pos = { x: (last.x1 + last.x2) / 2, y: (last.y1 + last.y2) / 2 };
         }
     };
     p.mouseReleased = () => {
+        isPanning = false;
         if (Global.isBeingDragged) {
             Global.isBeingDragged = false;
             rebuildObstacleGrid();
-        } else {
+        }
+        else {
             Global.isBeingDragged = false;
         }
+    };
+    p.mouseWheel = (event) => {
+        if (isEventOnUI(event)) {
+            return;
+        }
+        if (camera) {
+            camera.zoomAt(event.delta, p.mouseX, p.mouseY);
+        }
+        // Prevent page scroll
+        return false;
     };
 };
 new p5(sketch);

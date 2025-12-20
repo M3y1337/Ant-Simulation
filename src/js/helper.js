@@ -3,6 +3,12 @@ export function lineCollision(x1, y1, x2, y2, x3, y3, x4, y4) {
     const uB = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / ((y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1));
     return uA >= 0 && uA <= 1 && uB >= 0 && uB <= 1;
 }
+export function distSquared(x1, y1, x2, y2) {
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    return dx * dx + dy * dy;
+}
 export function dist(x1, y1, x2, y2) {
-    return Math.sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
+    // Keep for callers that need actual Euclidean distance
+    return Math.sqrt(distSquared(x1, y1, x2, y2));
 }
