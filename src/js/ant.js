@@ -5,6 +5,7 @@ import { Rectangle } from "./quadtree.js";
 import { Vector, fromAngle, clone } from "./vector.js";
 import { lineCollision, distSquared } from "./helper.js";
 import { Config } from "./config.js";
+import { onMapFoodConsumed } from "./imagemap.js";
 export class Ant {
     constructor(x, y, direction, nest) {
         this.hasFood = false;
@@ -27,14 +28,14 @@ export class Ant {
         this.wasPausedLastFrame = false;
     }
     draw(p) {
-        const h = 15;
-        const w = 5;
+        const h = Config.antSize || 15;
+        const w = Config.antWidth || 5;
         const angle = Math.atan2(this.velocity.y, this.velocity.x);
         p.push();
         p.translate(this.pos.x, this.pos.y);
         p.rotate(angle);
         p.noStroke();
-        p.fill(255);
+        p.fill(Config.antColor || 255);
         p.beginShape();
         p.vertex(0, 0);
         p.vertex(-h, -w / 2);
@@ -167,8 +168,9 @@ export class Ant {
             }
             this.framesUntilPheromone = Config.antPheromoneFrequency;
         }
-        else
+        else {
             this.framesUntilPheromone--;
+        }
     }
     applySteer() {
         const subtracted = this.desiredVel.subtract(this.velocity);
@@ -180,7 +182,6 @@ export class Ant {
     findFood() {
         let minDist = Infinity;
         let closest;
-        let index = -1;
         const foodRange = new Rectangle(this.pos.x, this.pos.y, this.sight, this.sight);
         const pool = Global.food.query(foodRange);
         for (let i = 0; i < pool.length; i++) { 
@@ -199,7 +200,6 @@ export class Ant {
                 }
                 minDist = distanceSq;
                 closest = pool[i];
-                index = i;
             }
         }
         const sightSq = this.sight * this.sight;
@@ -212,6 +212,10 @@ export class Ant {
                 this.hasFood = true;
                 this.movingToFood = false;
                 this.desiredVel.rotate(Math.PI, true);
+                const food = closest.value;
+                if (food && food.mapCellIndex != null) {
+                    onMapFoodConsumed(food.mapCellIndex);
+                }
                 closest.flagged = true;
                 this.pauseFrames = Config.foodPickupPauseFrames || 0;
             }
@@ -252,6 +256,9 @@ export class Ant {
             }
         };
 
+        // Determine which pheromone type to consider based on whether the ant has food.
+        // Home pherhormones (blue) are dropped by ants searching for food, and followed by ants carrying food in order to return home.
+        // Food pheromones (red) are dropped by ants carrying food, and followed by ants searching for food in order to find food sources.
         if (this.hasFood) {
             // Ants carrying food follow home (blue) pheromones in the forward direction.
             if (Config.useBluePheromones) {

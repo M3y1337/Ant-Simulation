@@ -15,165 +15,411 @@
                     <span id="fpsValue" class="value"></span>
                 </div>
             </div>
-
-            <div class="control">
-                <label for="antCount">Ant count</label>
-                <input id="antCount" type="range" min="10" max="300" step="1">
-                <span id="antCountValue" class="value"></span>
-            </div>
-
-            <div class="control">
-                <label for="antSpeed">Ant speed</label>
-                <input id="antSpeed" type="range" min="1" max="30" step="1">
-                <span id="antSpeedValue" class="value"></span>
-            </div>
-
-            <div class="control">
-                <label for="antSteeringStrength">Steering strength</label>
-                <input id="antSteeringStrength" type="range" min="0" max="2" step="0.05">
-                <span id="antSteeringStrengthValue" class="value"></span>
-            </div>
-
-            <div class="control">
-                <label for="antFoV">FoV</label>
-                <input id="antFoV" type="range" min="30" max="180" step="5">
-                <span id="antFoVValue" class="value"></span>
-            </div>
-
-            <div class="control">
-                <label for="antWanderStrength">Wander strength</label>
-                <input id="antWanderStrength" type="range" min="0" max="0.2" step="0.005">
-                <span id="antWanderStrengthValue" class="value"></span>
-            </div>
-
-            <div class="control">
-                <label for="antSight">Sight</label>
-                <input id="antSight" type="range" min="20" max="300" step="5">
-                <span id="antSightValue" class="value"></span>
-            </div>
-
-            <div class="control">
-                <label for="simulationSpeed">Simulation speed</label>
-                <input id="simulationSpeed" type="range" min="0.1" max="3" step="0.1">
-                <span id="simulationSpeedValue" class="value"></span>
-            </div>
-
-            <div class="control">
-                <label for="pheromoneLife">Pheromone lifetime</label>
-                <input id="pheromoneLife" type="range" min="100" max="2000" step="50">
-                <span id="pheromoneLifeValue" class="value"></span>
-            </div>
-
-            <div class="control">
-                <label for="pheromoneLowScoreThreshold">Pheromone low-score threshold</label>
-                <input id="pheromoneLowScoreThreshold" type="range" min="0" max="1" step="0.01">
-                <span id="pheromoneLowScoreThresholdValue" class="value"></span>
-            </div>
-
-            <div class="control">
-                <label for="pheromoneIgnoreProbability">Ignore weak pheromones (probability)</label>
-                <input id="pheromoneIgnoreProbability" type="range" min="0" max="1" step="0.05">
-                <span id="pheromoneIgnoreProbabilityValue" class="value"></span>
-            </div>
-
-            <div class="control">
-                <label><input id="pheromoneDiffusion" type="checkbox"> Enable pheromone diffusion</label>
-            </div>
-
-            <div class="control">
-                <label for="pheromoneDiffusionStrength">Pheromone diffusion strength</label>
-                <input id="pheromoneDiffusionStrength" type="range" min="0" max="2" step="0.1">
-                <span id="pheromoneDiffusionStrengthValue" class="value"></span>
-            </div>
-
-            <div class="control">
-                <label><input id="searchersFollowHomePheromones" type="checkbox"> Searchers follow home pheromones</label>
-            </div>
-
-            <div class="control">
-                <label for="searcherHomePheromoneWeight">Home pheromone weight (searchers)</label>
-                <input id="searcherHomePheromoneWeight" type="range" min="0" max="2" step="0.1">
-                <span id="searcherHomePheromoneWeightValue" class="value"></span>
-            </div>
-
-            <div class="control">
-                <label for="foodRadius">Food radius</label>
-                <input id="foodRadius" type="range" min="10" max="150" step="1">
-                <span id="foodRadiusValue" class="value"></span>
-            </div>
-
-            <div class="control">
-                <label for="foodClusterCellSize">Food cluster cell size</label>
-                <input id="foodClusterCellSize" type="range" min="2" max="20" step="2">
-                <span id="foodClusterCellSizeValue" class="value"></span>
-            </div>
-
-            <div class="control">
-                <label><input id="useClusteredFood" type="checkbox"> Use clustered food rendering</label>
-            </div>
-
-            <div class="control">
-                <label><input id="showFoodCounts" type="checkbox"> Show food counts on clusters</label>
-            </div>
-
-            <div class="control control-inline">
-                <label for="bgColor">Background color:</label>
-                <input id="bgColor" type="color">
-            </div>
-
-            <div class="control">
-                <label><input id="showPheromones" type="checkbox"> Show pheromones</label>
-            </div>
-
-            <div class="control">
-                <label for="pheromoneClusterCellSize">Pheromone cluster cell size</label>
-                <input id="pheromoneClusterCellSize" type="range" min="2" max="20" step="2">
-                <span id="pheromoneClusterCellSizeValue" class="value"></span>
-            </div>
-
-            <div class="control">
-                <label><input id="useClusteredPheromones" type="checkbox"> Use clustered pheromone rendering</label></label>
-            </div>
-
-            <div class="control">
-                <label><input id="useRedPheromones" type="checkbox"> Use food pheromones (red)</label>
-            </div>
-
-            <div class="control">
-                <label><input id="useBluePheromones" type="checkbox"> Use home pheromones (blue)</label>
-            </div>
-
-            <div class="control">
-                <label><input id="showObstacles" type="checkbox"> Show obstacles</label>
-            </div>
-
-            <div class="control">
-                <label><input id="debugSensors" type="checkbox"> Debug: Sensors (D)</label>
-            </div>
-
-            <div class="control">
-                <label><input id="debugQuadTree" type="checkbox"> Debug: QuadTree (Q)</label>
-            </div>
-
-            <div class="control">
-                <label><input id="debugAntState" type="checkbox"> Debug: Ant state (A)</label>
-            </div>
-
-            <div class="control buttons">
-                <button id="pauseButton" type="button">Pause</button>
-                <button id="stepButton" type="button">Step</button>
-                <button id="resetButton" type="button">Reset</button>
-            </div>
-
-            <div class="control" id="hudHelp">
-                <label>Controls / Hotkeys</label>
-                <div class="hud-lines">
-                    <div>F - Food, O - Obstacles</div>
-                    <div>R - Reset, P - Pause/Resume</div>
-                    <div>D - Sensors, Q - QuadTree, A - Ant state</div>
-                    <div>U - Toggle UI</div>
-                    <div>S - Save PNG</div>
+            <div id="ui-sections">
+            <!-- Ant behaviour -->
+            <div class="ui-section" data-section="ants">
+                <div class="ui-section-header">
+                    <span class="ui-section-title">Ants</span>
+                    <span class="ui-section-chevron">▾</span>
                 </div>
+                <div class="ui-section-body">
+                    <div class="control">
+                        <label for="antCount">Ant count</label>
+                        <input id="antCount" type="range" min="10" max="300" step="1">
+                        <span id="antCountValue" class="value"></span>
+                    </div>
+
+                    <div class="control">
+                        <label for="antSpeed">Ant speed</label>
+                        <input id="antSpeed" type="range" min="1" max="30" step="1">
+                        <span id="antSpeedValue" class="value"></span>
+                    </div>
+
+                    <div class="control">
+                        <label for="antSteeringStrength">Steering strength</label>
+                        <input id="antSteeringStrength" type="range" min="0" max="2" step="0.05">
+                        <span id="antSteeringStrengthValue" class="value"></span>
+                    </div>
+
+                    <div class="control">
+                        <label for="antFoV">FoV</label>
+                        <input id="antFoV" type="range" min="30" max="180" step="5">
+                        <span id="antFoVValue" class="value"></span>
+                    </div>
+
+                    <div class="control">
+                        <label for="antWanderStrength">Wander strength</label>
+                        <input id="antWanderStrength" type="range" min="0" max="0.2" step="0.005">
+                        <span id="antWanderStrengthValue" class="value"></span>
+                    </div>
+
+                    <div class="control">
+                        <label for="antSight">Sight</label>
+                        <input id="antSight" type="range" min="20" max="300" step="5">
+                        <span id="antSightValue" class="value"></span>
+                    </div>
+
+                    <div class="control prestart-only control-inline">
+                        <label for="antColor">Ant color</label>
+                        <input id="antColor" type="color">
+                    </div>
+
+                    <div class="control prestart-only control-inline">
+                        <label for="antSize">Ant length</label>
+                        <input id="antSize" type="number" min="5" max="40" step="1">
+                    </div>
+
+                    <div class="control prestart-only control-inline">
+                        <label for="antWidth">Ant width</label>
+                        <input id="antWidth" type="number" min="2" max="20" step="1">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Simulation & world -->
+            <div class="ui-section" data-section="simulation">
+                <div class="ui-section-header">
+                    <span class="ui-section-title">Simulation &amp; World</span>
+                    <span class="ui-section-chevron">▾</span>
+                </div>
+                <div class="ui-section-body">
+                    <div class="control">
+                        <label for="simulationSpeed">Simulation speed</label>
+                        <input id="simulationSpeed" type="range" min="0.1" max="3" step="0.1">
+                        <span id="simulationSpeedValue" class="value"></span>
+                    </div>
+
+                    <div class="control control-inline">
+                        <label for="simWidth">Simulation width</label>
+                        <input id="simWidth" type="number" min="500" max="20000" step="100">
+                    </div>
+
+                    <div class="control control-inline">
+                        <label for="simHeight">Simulation height</label>
+                        <input id="simHeight" type="number" min="500" max="20000" step="100">
+                    </div>
+
+                    <div class="control control-inline">
+                        <label for="bgColor">Background color</label>
+                        <input id="bgColor" type="color">
+                    </div>
+
+                    <div class="control prestart-only">
+                        <label><input id="autoStartSimulation" type="checkbox"> Start automatically</label>
+                    </div>
+
+                    <div class="control prestart-only">
+                        <label><input id="pauseWhenNoFood" type="checkbox"> Pause when all food is collected</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pheromones -->
+            <div class="ui-section" data-section="pheromones">
+                <div class="ui-section-header">
+                    <span class="ui-section-title">Pheromones</span>
+                    <span class="ui-section-chevron">▾</span>
+                </div>
+                <div class="ui-section-body">
+                    <div class="control">
+                        <label><input id="useRedPheromones" type="checkbox"> Use food pheromones (red)</label>
+                    </div>
+                    
+                    <div class="control">
+                        <label><input id="useBluePheromones" type="checkbox"> Use home pheromones (blue)</label>
+                    </div>
+
+                    <div class="control">
+                        <label for="pheromoneLife">Pheromone lifetime</label>
+                        <input id="pheromoneLife" type="range" min="100" max="2000" step="50">
+                        <span id="pheromoneLifeValue" class="value"></span>
+                    </div>
+
+                    <div class="control">
+                        <label for="pheromoneLowScoreThreshold">Pheromone low-score threshold</label>
+                        <input id="pheromoneLowScoreThreshold" type="range" min="0" max="1" step="0.01">
+                        <span id="pheromoneLowScoreThresholdValue" class="value"></span>
+                    </div>
+
+                    <div class="control">
+                        <label for="pheromoneIgnoreProbability">Ignore weak pheromones (probability)</label>
+                        <input id="pheromoneIgnoreProbability" type="range" min="0" max="1" step="0.05">
+                        <span id="pheromoneIgnoreProbabilityValue" class="value"></span>
+                    </div>
+
+                    <div class="control">
+                        <label><input id="pheromoneDiffusion" type="checkbox"> Enable pheromone diffusion</label>
+                    </div>
+
+                    <div class="control">
+                        <label for="pheromoneDiffusionStrength">Pheromone diffusion strength</label>
+                        <input id="pheromoneDiffusionStrength" type="range" min="0" max="2" step="0.1">
+                        <span id="pheromoneDiffusionStrengthValue" class="value"></span>
+                    </div>
+
+                    <div class="control hidden">
+                        <label><input id="searchersFollowHomePheromones" type="checkbox"> Searchers follow home pheromones</label>
+                    </div>
+
+                    <div class="control hidden">
+                        <label for="searcherHomePheromoneWeight">Home pheromone weight (searchers)</label>
+                        <input id="searcherHomePheromoneWeight" type="range" min="0" max="2" step="0.1">
+                        <span id="searcherHomePheromoneWeightValue" class="value"></span>
+                    </div>
+
+                    <div class="control">
+                        <label><input id="showPheromones" type="checkbox"> Show pheromones</label>
+                    </div>
+
+                    <div class="control prestart-only control-inline">
+                        <label for="redPheromoneColor">Food pheromone color</label>
+                        <input id="redPheromoneColor" type="color">
+                    </div>
+
+                    <div class="control prestart-only control-inline">
+                        <label for="bluePheromoneColor">Home pheromone color</label>
+                        <input id="bluePheromoneColor" type="color">
+                    </div>
+
+                    <div class="control">
+                        <label for="pheromoneClusterCellSize">Pheromone cluster cell size</label>
+                        <input id="pheromoneClusterCellSize" type="range" min="2" max="20" step="2">
+                        <span id="pheromoneClusterCellSizeValue" class="value"></span>
+                    </div>
+
+                    <div class="control">
+                        <label><input id="useClusteredPheromones" type="checkbox"> Use clustered pheromone rendering</label></label>
+                    </div>
+      
+                </div>
+            </div>
+
+            <!-- Food & obstacles -->
+            <div class="ui-section" data-section="food-obstacles">
+                <div class="ui-section-header">
+                    <span class="ui-section-title">Food &amp; Obstacles</span>
+                    <span class="ui-section-chevron">▾</span>
+                </div>
+                <div class="ui-section-body">
+                    <div class="control">
+                        <label for="foodRadius">Food radius</label>
+                        <input id="foodRadius" type="range" min="10" max="150" step="1">
+                        <span id="foodRadiusValue" class="value"></span>
+                    </div>
+
+                    <div class="control">
+                        <label for="foodClusterCellSize">Food cluster cell size</label>
+                        <input id="foodClusterCellSize" type="range" min="2" max="20" step="2">
+                        <span id="foodClusterCellSizeValue" class="value"></span>
+                    </div>
+
+                    <div class="control">
+                        <label><input id="useClusteredFood" type="checkbox"> Use clustered food rendering</label>
+                    </div>
+
+                    <div class="control">
+                        <label><input id="showFoodCounts" type="checkbox"> Show food counts on clusters</label>
+                    </div>
+
+                    <div class="control">
+                        <label><input id="showObstacles" type="checkbox"> Show obstacles</label>
+                    </div>
+
+                    <div class="control prestart-only control-inline">
+                        <label for="foodColor">Food color</label>
+                        <input id="foodColor" type="color">
+                    </div>
+
+                    <div class="control prestart-only control-inline">
+                        <label for="obstacleColor">Obstacle color</label>
+                        <input id="obstacleColor" type="color">
+                    </div>
+
+                    <div class="control prestart-only control-inline">
+                        <label for="nestColor">Nest color</label>
+                        <input id="nestColor" type="color">
+                    </div>
+
+                    <div class="control prestart-only control-inline">
+                        <label for="nestTextColor">Nest text color</label>
+                        <input id="nestTextColor" type="color">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Image map -->
+            <div class="ui-section" data-section="image-map">
+                <div class="ui-section-header">
+                    <span class="ui-section-title">Image Map</span>
+                    <span class="ui-section-chevron">▾</span>
+                </div>
+                <div class="ui-section-body">
+                    <div class="control">
+                        <label><input id="useImageMap" type="checkbox"> Use image map</label>
+                    </div>
+
+                    <div class="control">
+                        <label><input id="mapUseImageSize" type="checkbox"> Use image size for world</label>
+                    </div>
+
+                    <div class="control">
+                        <label><input id="mapShowAllCells" type="checkbox"> Show all image map cells</label>
+                    </div>
+
+                    <div class="control">
+                        <label for="nestPlacementMode">Nest placement</label>
+                        <select id="nestPlacementMode">
+                            <option value="2">Largest nest blob center</option>
+                            <option value="1">All nest cells center</option>
+                            <option value="3">Random nest cell</option>
+                            <option value="0">Simulation center</option>
+                        </select>
+                    </div>
+
+                    <div class="control">
+                        <label><input id="mapShowNestMarker" type="checkbox"> Draw nest marker circle</label>
+                    </div>
+
+                    <div class="control">
+                        <label for="mapImagePath">Map image path</label>
+                        <input id="mapImagePath" type="text">
+                    </div>
+
+                    <div class="control buttons">
+                        <button id="mapImageChooseButton" type="button">Choose image file…</button>
+                    </div>
+
+                    <input id="mapImageFileInput" type="file" accept="image/*" style="display: none;">
+
+                    <div class="control">
+                        <label for="mapSampleStep">Map sample step (pixels)</label>
+                        <input id="mapSampleStep" type="number" min="1" max="32" step="1">
+                    </div>
+
+                    <div class="control">
+                        <label>Image palette</label>
+                        <div id="palettePreview" class="palette-preview"></div>
+                        <div class="palette-actions">
+                            <button id="generatePaletteButton" type="button">Generate palette</button>
+                            <button id="autoAssignPaletteButton" type="button">Auto-assign roles</button>
+                            <button id="applyPaletteRolesButton" type="button">Apply roles to map colors</button>
+                        </div>
+                    </div>
+
+                    <div class="control control-inline">
+                        <label for="mapFoodColor">Food color</label>
+                        <input id="mapFoodColor" type="color">
+                    </div>
+
+                    <div class="control control-inline">
+                        <label for="mapObstacleColor">Obstacle color</label>
+                        <input id="mapObstacleColor" type="color">
+                    </div>
+
+                    <div class="control control-inline">
+                        <label for="mapNestColor">Nest color</label>
+                        <input id="mapNestColor" type="color">
+                    </div>
+
+                    <div class="control control-inline">
+                        <label for="mapFoodDepletedColor">Depleted food color</label>
+                        <input id="mapFoodDepletedColor" type="color">
+                    </div>
+                    <div class="control">
+                        <label><input id="mapFoodRenderCellsOnly" type="checkbox"> Render food only via cells</label>
+                    </div>
+                    <div class="control">
+                        <label><input id="mapFoodPlacementCellsOnly" type="checkbox"> Place food only on food cells</label>
+                    </div>
+
+                    <div class="control">
+                        <label for="mapColorTolerance">Map color tolerance</label>
+                        <input id="mapColorTolerance" type="range" min="0" max="300" step="1">
+                        <span id="mapColorToleranceValue" class="value"></span>
+                    </div>
+
+                    <div class="control">
+                        <label for="mapPaletteMinDistance">Palette min distance</label>
+                        <input id="mapPaletteMinDistance" type="range" min="0" max="300" step="1">
+                        <span id="mapPaletteMinDistanceValue" class="value"></span>
+                    </div>
+
+                    <div class="control">
+                        <label for="colorDistanceMethod">Color distance method</label>
+                        <select id="colorDistanceMethod">
+                            <option value="0">HSL</option>
+                            <option value="1">HSV</option>
+                            <option value="2">RGB</option>
+                            <option value="3">CIEDE2000</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Config -->
+            <div class="ui-section" data-section="config">
+                <div class="ui-section-header">
+                    <span class="ui-section-title">Config</span>
+                    <span class="ui-section-chevron">▾</span>
+                </div>
+                <div class="ui-section-body">
+                    <div class="control">
+                        <label for="configPath">Config path <span class="hint">(used for save/load; Reset reloads image)</span></label>
+                        <input id="configPath" type="text">
+                    </div>
+
+                    <div class="control buttons">
+                        <button id="loadConfigButton" type="button">Choose config file…</button>
+                        <button id="saveConfigButton" type="button">Save config</button>
+                    </div>
+
+                    <input id="configFileInput" type="file" accept="application/json,.json" style="display: none;">
+                </div>
+            </div>
+
+            <!-- Debug & controls -->
+            <div class="ui-section" data-section="debug">
+                <div class="ui-section-header">
+                    <span class="ui-section-title">Debug &amp; Controls</span>
+                    <span class="ui-section-chevron">▾</span>
+                </div>
+                <div class="ui-section-body">
+                    <div class="control">
+                        <label><input id="debugSensors" type="checkbox"> Debug: Sensors (D)</label>
+                    </div>
+
+                    <div class="control">
+                        <label><input id="debugQuadTree" type="checkbox"> Debug: QuadTree (Q)</label>
+                    </div>
+
+                    <div class="control">
+                        <label><input id="debugAntState" type="checkbox"> Debug: Ant state (A)</label>
+                    </div>
+                    <div class="control" id="hudHelp">
+                        <label>Controls / Hotkeys</label>
+                        <div class="hud-lines">
+                            <div>F - Food, O - Obstacles</div>
+                            <div>R - Reset, P - Pause/Resume</div>
+                            <div>D - Sensors, Q - QuadTree, A - Ant state</div>
+                            <div>U - Toggle UI</div>
+                            <div>S - Save PNG (view)</div>
+                            <div>E - Export world PNG</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            </div> <!-- /ui-sections -->
+
+            <div id="ui-footer">
+                <div class="control buttons">
+                    <button id="startButton" type="button" class="prestart-only">Start simulation</button>
+                    <button id="pauseButton" type="button">Pause</button>
+                    <button id="stepButton" type="button">Step</button>
+                    <button id="resetButton" type="button">Reset</button>
+                    <button id="resetCameraButton" type="button">Reset camera</button>
+                    <button id="exportWorldButton" type="button">Export world PNG</button>
+                </div>
+                <div id="statusMessage" class="status-message"></div>
             </div>
         </div>
 

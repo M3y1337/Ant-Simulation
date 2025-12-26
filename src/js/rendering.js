@@ -39,7 +39,7 @@ export function renderClusteredPheromones(p, visibleRedPheromones, visibleBluePh
         const ageFactor = 1 - avgIntensity; // 0 = fresh, 1 = old
         const strength = Config.pheromoneDiffusionStrength != null ? Config.pheromoneDiffusionStrength : 1.0;
         alpha *= 1 - 0.6 * ageFactor * strength;
-        radius += ageFactor * 6 * strength;
+        radius += ageFactor * 3 * strength;
       }
       if (alpha < 5) continue; 
       // too faint to matter
@@ -55,8 +55,30 @@ export function renderClusteredPheromones(p, visibleRedPheromones, visibleBluePh
     }
   };
 
-  drawPheroBuckets(redCells, 253, 33, 8);
-  drawPheroBuckets(blueCells, 66, 135, 245);
+  const hexToRgb = (hex, fallback) => {
+    if (!hex || typeof hex !== "string") return fallback;
+    let h = hex.trim();
+    if (h[0] === "#") h = h.slice(1);
+    if (h.length === 3) {
+      h = h.split("").map((c) => c + c).join("");
+    }
+    if (h.length !== 6) return fallback;
+    const num = parseInt(h, 16);
+    if (Number.isNaN(num)) return fallback;
+    return {
+      r: (num >> 16) & 255,
+      g: (num >> 8) & 255,
+      b: num & 255,
+    };
+  };
+
+  const redDefaults = { r: 253, g: 33, b: 8 };
+  const blueDefaults = { r: 66, g: 135, b: 245 };
+  const redRGB = hexToRgb(Config.pheromoneRedColor, redDefaults);
+  const blueRGB = hexToRgb(Config.pheromoneBlueColor, blueDefaults);
+
+  drawPheroBuckets(redCells, redRGB.r, redRGB.g, redRGB.b);
+  drawPheroBuckets(blueCells, blueRGB.r, blueRGB.g, blueRGB.b);
 }
 
 export function renderClusteredFood(p, visibleFood) {
@@ -145,14 +167,34 @@ export function renderClusteredFood(p, visibleFood) {
   }
 
   p.noStroke();
-  p.fill(0, 255, 0);
+  const hexToRgb = (hex, fallback) => {
+    if (!hex || typeof hex !== "string") return fallback;
+    let h = hex.trim();
+    if (h[0] === "#") h = h.slice(1);
+    if (h.length === 3) {
+      h = h.split("").map((c) => c + c).join("");
+    }
+    if (h.length !== 6) return fallback;
+    const num = parseInt(h, 16);
+    if (Number.isNaN(num)) return fallback;
+    return {
+      r: (num >> 16) & 255,
+      g: (num >> 8) & 255,
+      b: num & 255,
+    };
+  };
+
+  const foodDefaults = { r: 0, g: 255, b: 0 };
+  const foodRGB = hexToRgb(Config.foodClusterColor || Config.foodColor, foodDefaults);
+
+  p.fill(foodRGB.r, foodRGB.g, foodRGB.b);
   for (const cluster of clusters) {
     const x = cluster.xSum / cluster.count;
     const y = cluster.ySum / cluster.count;
 
     // Approximate footprint of all dots in this merged cluster using its
     // overall bounding box, expanded by the dot radius.
-    const foodRadius = 6; // matches the radius for individual food circles
+    const foodRadius = Config.foodClusterRadius != null ? Config.foodClusterRadius : 6; // approximate radius for footprint
     const width = Math.max(4, (cluster.maxX - cluster.minX)) + foodRadius;
     const height = Math.max(4, (cluster.maxY - cluster.minY)) + foodRadius;
 
@@ -161,11 +203,13 @@ export function renderClusteredFood(p, visibleFood) {
     p.circle(x, y, radius * 2);
 
     if (Config.showFoodCounts) {
-      p.fill(0, 0, 0);
+      const textDefaults = { r: 0, g: 0, b: 0 };
+      const textRGB = hexToRgb(Config.foodClusterTextColor, textDefaults);
+      p.fill(textRGB.r, textRGB.g, textRGB.b);
       p.textAlign(p.CENTER, p.CENTER);
       p.textSize(10);
       p.text(String(cluster.count), x, y);
-      p.fill(0, 255, 0);
+      p.fill(foodRGB.r, foodRGB.g, foodRGB.b);
     }
   }
 }

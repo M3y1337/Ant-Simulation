@@ -25,13 +25,35 @@ export class Pheromone {
             alpha *= 1 - 0.6 * ageFactor * strength;
         }
 
-        if (this.type === PheromoneType.BLUE) {
-            p.noStroke();
-            p.fill(66, 135, 245, alpha);
-        }
-        else {
-            p.noStroke();
-            p.fill(253, 33, 8, alpha);
+            const hexToRgb = (hex, fallback) => {
+                if (!hex || typeof hex !== "string") return fallback;
+                let h = hex.trim();
+                if (h[0] === "#") h = h.slice(1);
+                if (h.length === 3) {
+                    h = h.split("").map((c) => c + c).join("");
+                }
+                if (h.length !== 6) return fallback;
+                const num = parseInt(h, 16);
+                if (Number.isNaN(num)) return fallback;
+                return {
+                    r: (num >> 16) & 255,
+                    g: (num >> 8) & 255,
+                    b: num & 255,
+                };
+            };
+
+            const blueDefaults = { r: 66, g: 135, b: 245 };
+            const redDefaults = { r: 253, g: 33, b: 8 };
+            const blueRGB = hexToRgb(Config.pheromoneBlueColor, blueDefaults);
+            const redRGB = hexToRgb(Config.pheromoneRedColor, redDefaults);
+
+            if (this.type === PheromoneType.BLUE) {
+                p.noStroke();
+                p.fill(blueRGB.r, blueRGB.g, blueRGB.b, alpha);
+            }
+            else {
+                p.noStroke();
+                p.fill(redRGB.r, redRGB.g, redRGB.b, alpha);
         }
         // Diameter is 2 * radius
         p.circle(this.pos.x, this.pos.y, radius * 2);

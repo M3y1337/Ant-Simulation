@@ -1,4 +1,5 @@
 import { Global } from "./global.js";
+import { Config } from "./config.js";
 
 const OBSTACLE_CELL_SIZE = 64; // pixels
 let obstacleGrid = new Map();
@@ -63,7 +64,7 @@ export function getObstaclesNearLine(x1, y1, x2, y2) {
 
 export function drawObstacles(p) {
   if (!Global.obstacles || Global.obstacles.length === 0) return;
-  p.stroke("#ffaf00");
+  p.stroke(Config.obstacleColor || "#ffaf00");
   p.strokeWeight(5);
   for (const seg of Global.obstacles) {
     p.line(seg.x1, seg.y1, seg.x2, seg.y2);

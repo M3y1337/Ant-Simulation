@@ -1,5 +1,5 @@
 // Helper functions for color manipulation and distance calculations
-function colorDistanceRGBSum(c1, c2) {
+export function colorDistanceRGBSum(c1, c2) {
   let [r1, g1, b1] = c1;
   let [r2, g2, b2] = c2;
 
@@ -12,7 +12,7 @@ function colorDistanceRGBSum(c1, c2) {
   return dr + dg + db;
 }
 
-function colorDistanceRGB(c1, c2) {
+export function colorDistanceRGB(c1, c2) {
   let [r1, g1, b1] = c1;
   let [r2, g2, b2] = c2;
 
@@ -23,7 +23,7 @@ function colorDistanceRGB(c1, c2) {
   return dr * dr + dg * dg + db * db;
 }
 
-function rgbToHsv(r, g, b) {
+export function rgbToHsv(r, g, b) {
   r /= 255;
   g /= 255;
   b /= 255;
@@ -51,7 +51,7 @@ function rgbToHsv(r, g, b) {
   return [h, s, v]; // Hue, Saturation, Value
 }
 
-function colorDistanceHSV(c1, c2) {
+export function colorDistanceHSV(c1, c2) {
   // Convert colors to HSV 
   let [h1, s1, v1] = rgbToHsv(...c1);
   let [h2, s2, v2] = rgbToHsv(...c2);
@@ -67,7 +67,7 @@ function colorDistanceHSV(c1, c2) {
   return hDiff * hDiff + sDiff * sDiff + vDiff * vDiff;
 }
 
-function rgbToHSL(r, g, b) {
+export function rgbToHSL(r, g, b) {
   r /= 255;
   g /= 255;
   b /= 255;
@@ -94,7 +94,7 @@ function rgbToHSL(r, g, b) {
   return [h * 360, s * 100, l * 100]; // Hue, Saturation, Lightness
 }
 
-function colorDistanceHSL(c1, c2, isHSL = false, normalize = false) {
+export function colorDistanceHSL(c1, c2, isHSL = false, normalize = false) {
 
   let [h1, s1, l1] = isHSL ? [...c1] : rgbToHSL(...c1);
   let [h2, s2, l2] = isHSL ? [...c2] : rgbToHSL(...c2);
@@ -103,8 +103,8 @@ function colorDistanceHSL(c1, c2, isHSL = false, normalize = false) {
   if (hDiff < 0) hDiff += 360; // Ensure positive difference
   if (hDiff > 180) hDiff = 360 - hDiff; // Wrap around the hue circle 
 
-  let sDiff = abs(s1 - s2);
-  let lDiff = abs(l1 - l2);
+  let sDiff = Math.abs(s1 - s2);
+  let lDiff = Math.abs(l1 - l2);
 
   /*if (normalize) {
     let maxDiff = max(hDiff, sDiff, lDiff);
@@ -122,7 +122,7 @@ function colorDistanceHSL(c1, c2, isHSL = false, normalize = false) {
   return hDiff * hDiff + sDiff * sDiff + lDiff * lDiff;
 }
 
-function rgbToCielab(r, g, b) {
+export function rgbToCielab(r, g, b) {
   // Convert RGB to XYZ
   r /= 255;
   g /= 255;
@@ -161,7 +161,7 @@ function rgbToCielab(r, g, b) {
   return [l, a, b2];
 }
 
-function colorDistanceCIEDE2000(c1, c2) {
+export function colorDistanceCIEDE2000(c1, c2) {
   let [l1, a1, b1] = rgbToCielab(...c1);
   let [l2, a2, b2] = rgbToCielab(...c2);
 
@@ -204,29 +204,66 @@ function colorDistanceCIEDE2000(c1, c2) {
   return deltaE;
 }
 
-function getColorDistance(c1, c2, method = 0) {
-  if (c1 instanceof p5.Color) {
-    c1 = [red(c1), green(c1), blue(c1)];
+/** 
+* Main function to get color distance using specified method
+* @param {Array|{r:number,g:number,b:number}|p5.Color} c1 - First color
+* @param {Array|{r:number,g:number,b:number}|p5.Color} c2 - Second color
+* @param {number|string} method - Method to use for distance calculation (0: HSL, 1: HSV, 2: RGB, 3: CIEDE2000) or case-insensitive string. Defaults to 0 (HSL).
+* @returns {number} - Color distance
+*/
+export function getColorDistance(c1, c2, method = 0) {
+  // Normalize input colors to [r, g, b] arrays.
+  const toRGBArray = (c) => {
+    if (!c) return [0, 0, 0];
+
+    // Support p5.Color when available (global mode)
+    if (typeof p5 !== "undefined" && c instanceof p5.Color) {
+      return [red(c), green(c), blue(c)];
+    }
+
+    // Plain object with r/g/b
+    if (!Array.isArray(c) && typeof c === "object" && c.r != null && c.g != null && c.b != null) {
+      return [c.r, c.g, c.b];
+    }
+
+    // Assume array-like [r,g,b]
+    const arr = Array.isArray(c) ? c : [0, 0, 0];
+    return [arr[0] || 0, arr[1] || 0, arr[2] || 0];
+  };
+
+  const a = toRGBArray(c1);
+  const b = toRGBArray(c2);
+
+  // Normalize method to a numeric mode 0..3
+  let mode = 0;
+  if (typeof method === "number") {
+    mode = method;
+  } else if (typeof method === "string") {
+    const m = method.toLowerCase();
+    if (m === "" || m === "hsl") mode = 0;
+    else if (m === "hsv") mode = 1;
+    else if (m === "rgb") mode = 2;
+    else if (m === "lab" || m === "ciede2000" || m === "cie") mode = 3;
+    else {
+      console.debug("Unknown color distance method string:", method, "- defaulting to HSL");
+      mode = 0;
+    }
   }
-  if (c2 instanceof p5.Color) {
-    c2 = [red(c2), green(c2), blue(c2)];
-  }
-  switch (method) {
-    case 0:
-      return colorDistanceHSL(c1, c2);
+
+  switch (mode) {
     case 1:
-      return colorDistanceHSV(c1, c2);
+      return colorDistanceHSV(a, b);
     case 2:
-      return colorDistanceRGB(c1, c2);
+      return colorDistanceRGB(a, b);
     case 3:
-      return colorDistanceCIEDE2000(c1, c2);
+      return colorDistanceCIEDE2000(a, b);
+    case 0:
     default:
-      console.warn('Unknown color distance method:', method);
-      return colorDistanceHSL(c1, c2);
+      return colorDistanceHSL(a, b);
   }
 }
 
-function buildRGBArray(img, sample = 1) {
+export function buildRGBArray(img, sample = 1) {
   if (sample < 1) {
     console.warn("Sample size must be at least 1, defaulting to 1.");
     sample = 1;
@@ -247,7 +284,7 @@ function buildRGBArray(img, sample = 1) {
 
 }
 
-function getColorPalette(img, depth = 2, sample = 1, minDist = 50, colorDistanceMethod = 0, filterGrey = false, greyThresh = 35) {
+export function getColorPalette(img, depth = 2, sample = 1, minDist = 50, colorDistanceMethod = 0, filterGrey = false, greyThresh = 35) {
   // Extract all pixels from the image
   img.loadPixels();
   let colors = buildRGBArray(img, sample);
@@ -275,34 +312,11 @@ function getColorPalette(img, depth = 2, sample = 1, minDist = 50, colorDistance
   // Reduce palette by removing colors that are too close to each other
   palette = reduceColorPalette(palette, minDist, colorDistanceMethod, filterGrey, greyThresh);
 
-  // Convert the palette to a more usable format if distance method is not RGB 
-  switch (colorDistanceMethod) {
-    case 0:
-      // HSL
-      palette = palette.map(c => rgbToHSL(...c));
-      break;
-    case 1:
-      // HSV
-      palette = palette.map(c => rgbToHsv(...c));
-      break;
-    case 2:
-      // RGB
-      break; // No conversion needed
-    case 3:
-      // CIEDE2000
-      palette = palette.map(c => rgbToCielab(...c));
-      break;
-    default:
-      console.warn('Unknown color distance method:', colorDistanceMethod);
-  }
-
-  // Round the colors to integers
-  palette = palette.map(c => c.map(Math.round));
-
-  return palette;
+  // Palette values are kept as RGB triplets for UI/hex usage.
+  return palette.map(([r, g, b]) => [Math.round(r), Math.round(g), Math.round(b)]);
 }
 
-function HSLtoRGB(h, s, l) {
+export function HSLtoRGB(h, s, l) {
   h /= 360;
   s /= 100;
   l /= 100;
@@ -333,7 +347,7 @@ function HSLtoRGB(h, s, l) {
 }
 
 
-function reduceColorPalette(palette, minDist = 50, colorDistanceMethod = 0) {
+export function reduceColorPalette(palette, minDist = 50, colorDistanceMethod = 0) {
   let reducedPalette = [palette[0]];
 
   for (let i = 1; i < palette.length; i++) {
@@ -352,7 +366,7 @@ function reduceColorPalette(palette, minDist = 50, colorDistanceMethod = 0) {
   return reducedPalette;
 }
 
-function medianCut(cube, depth) {
+export function medianCut(cube, depth) {
   // Step 2: Median cut recursive function
   if (cube.length === 0) return [];
 

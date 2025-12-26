@@ -3,6 +3,7 @@ import { Ant } from "./ant.js";
 import { distSquared } from "./helper.js";
 import { Global } from "./global.js";
 import { Food } from "./food.js";
+import { Config } from "./config.js";
 export class Nest {
     constructor(x, y, antAmount) {
         this.ants = [];
@@ -15,9 +16,9 @@ export class Nest {
     }
     draw(p) {
         p.noStroke();
-        p.fill("#ce5114");
+        p.fill(Config.nestColor || "#ce5114");
         p.circle(this.pos.x, this.pos.y, this.radius * 2);
-        p.fill(255);
+        p.fill(Config.nestTextColor || 255);
         p.textAlign(p.CENTER, p.CENTER);
         p.textSize(30);
         p.text(`${this.counter}`, this.pos.x, this.pos.y);

@@ -18,8 +18,10 @@ export class Camera {
     this.renderer.resetMatrix();
   }
 
-  pan(dx, dy) {
-    this.checkBounds();
+  pan(dx, dy, boundsCheck = false) {
+    if (boundsCheck && this.bounds) {
+      this.checkBounds();
+    }
     this.offset.x += dx / this.zoom;
     this.offset.y += dy / this.zoom;
   }
@@ -89,3 +91,108 @@ export class Camera {
     return {x: wx, y: wy};
   }
 }
+
+/*function exportImage({
+  filename = 'output',
+  resolutionMultiplier = 3,
+  exportWidth = 0,
+  exportHeight = 0,
+  exportType = 'current',
+  worldBounds = null,
+  baseCamera = null,
+  drawFunc,
+  backgroundCol = null, // assumed background color (r, g, b)
+  bgAlpha = 50,       // assumed background alpha (0-255)
+  additivePasses = 0, // if 0, auto-determine based on bgAlpha
+  opacityThreshold = 0.01, // when to consider it visually 'full'
+  exportOthershapes = true,
+  exportCameraJson = true,
+  pixlD = 1,
+}) {
+  const baseW = width;
+  const baseH = height;
+  let exportW = exportWidth > 0 ? exportWidth : baseW * resolutionMultiplier;
+  let exportH = exportHeight > 0 ? exportHeight : baseH * resolutionMultiplier;
+
+  if (!worldBounds) {
+    worldBounds = {
+      minX: 0,
+      minY: 0,
+      maxX: exportW,
+      maxY: exportW
+    };
+  }
+
+  // Create offscreen canvas
+  let pg = createGraphics(exportW, exportH);
+  pg.pixelDensity(pixlD);
+
+  let exportCam = new Camera(pg);
+
+  exportCam.baseScale = resolutionMultiplier;
+
+  if (exportType === 'current') {
+    exportCam.offset = baseCamera.offset.copy();
+    exportCam.zoom = baseCamera.zoom * resolutionMultiplier;
+  } else if (exportType === 'full') {
+    let worldW = worldBounds.maxX - worldBounds.minX;
+    let worldH = worldBounds.maxY - worldBounds.minY;
+    let zoomFactor = min(baseW, baseH) / max(worldW, worldH);
+    exportCam.zoom = zoomFactor;
+
+    let centerX = (worldBounds.minX + worldBounds.maxX) / 2;
+    let centerY = (worldBounds.minY + worldBounds.maxY) / 2;
+    exportCam.offset.set(-centerX, -centerY);
+  }
+
+  // Determine number of passes if not provided
+  if (additivePasses === 0) {
+    let decayFactor = 1 - (bgAlpha / 255);
+    additivePasses = Math.ceil(Math.log(opacityThreshold) / Math.log(decayFactor));
+    console.log(`Calculated ${additivePasses} additive passes based on bgAlpha ${bgAlpha}`);
+  }
+
+  if (backgroundCol) {
+    pg.background(red(backgroundCol), green(backgroundCol), blue(backgroundCol), 255);
+  }
+  let donePasses = 0;
+  for (let i = 0; i < additivePasses; i++) {
+    donePasses = drawFunc(pg, exportCam, donePasses);
+    if (donePasses > additivePasses / 2) {
+      saveCanvas(pg, filename + '_' + i, 'png');
+    }
+    donePasses++;
+  }
+
+  //console.log(`Exported image: ${filename}.png at ${exportW}x${exportH} with ${donePasses} passes`);
+  //pg.remove();
+  //pg = undefined;
+  setTimeout(() => {
+    console.log(`Exported image: ${filename}.png at ${exportW}x${exportH} with ${donePasses} passes in 7000ms`);
+    pg.remove();
+    pg = undefined;
+    console.debug("Starting loop() again...");
+    loop();
+    // console.debug("Saving lowres image...");
+    // saveCanvas(frameCount + '_current_view_lowres.png');
+    if (exportOthershapes) {
+      exportFoundationShapes();
+      let lrg = [];
+      for (let group of largeMouseTracks) {
+        for (let shape of group.shapes) {
+          lrg.push(shape);
+        }
+      }
+      exportSVG(lrg, frameCount + '_mouseTracksLarge.svg');
+      exportSVG(mouseTracks, frameCount + '_mouseTracks.svg');
+      exportGrid(fullGrid, frameCount + '_fullgrid');
+      if (!displacedPixels) {
+        let displaced = createDisplacedGridcopy(fullGrid, fullGrid.cellW * 0.5, [COLORCONTENT, SHAPECONTENT], [COLORCONTENT]);
+        exportGrid(displaced, frameCount + '_displaced_grid');
+      } else {
+        exportGrid(displacedPixels, frameCount + '_displaced_grid');
+      }
+      saveStrings(cam.exportCamData(), frameCount + '_camdata.json');
+    }
+  }, 7000);
+}*/

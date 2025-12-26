@@ -23,7 +23,22 @@ body {
   background: rgba(0, 0, 0, 0.7);
   border-radius: 4px;
   z-index: 10;
-  min-width: 220px;
+  min-width: max(280px, 5vw);
+  max-width: min(max(380px, 12vw), 95vw);
+  max-height: calc(100vh - 20px);
+  overflow-y: auto;
+  /* Firefox scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: #666 transparent;
+}
+
+body.prestart #ui-panel {
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(1500px, 95vw);
+  max-width: 95vw;
+  max-height: calc(100vh - 40px);
 }
 
 #ui-panel .ui-header {
@@ -80,9 +95,159 @@ body {
 }
 
 #ui-panel input[type="range"] {
-  width: 160px;
+  width: 100%;
 }
 
 #ui-panel .value {
   margin-left: 4px;
+}
+
+/* Container for all sections */
+#ui-sections {
+  margin-top: 4px;
+}
+
+body.prestart #ui-sections {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  column-gap: 16px;
+  row-gap: 8px;
+}
+
+/* Collapsible UI sections */
+.ui-section {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 6px;
+  margin-top: 6px;
+}
+
+.ui-section:first-of-type {
+  border-top: none;
+  padding-top: 0;
+  margin-top: 0;
+}
+
+.ui-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+  padding: 2px 0;
+}
+
+.ui-section-title {
+  flex: 1;
+}
+
+.ui-section-chevron {
+  font-size: 11px;
+  margin-left: 6px;
+  transition: transform 0.15s ease;
+}
+
+.ui-section.collapsed .ui-section-body {
+  display: none;
+}
+
+.ui-section.collapsed .ui-section-chevron {
+  transform: rotate(-90deg);
+}
+
+.ui-section-body {
+  margin-top: 4px;
+}
+
+/* Clickable value labels for sliders */
+.editable-value {
+  cursor: pointer;
+  text-decoration: underline dotted rgba(255, 255, 255, 0.4);
+  text-underline-offset: 2px;
+}
+
+.prestart-only {
+  display: none;
+}
+
+body.prestart .prestart-only {
+  display: block;
+}
+
+/* Footer with main control buttons pinned to bottom of panel */
+#ui-footer {
+  margin-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  padding-top: 8px;
+}
+
+.status-message {
+  margin-top: 6px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.palette-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.palette-row {
+  display: flex;
+  align-items: center;
+  font-size: 11px;
+}
+
+.palette-index {
+  width: 16px;
+  text-align: right;
+  margin-right: 4px;
+  opacity: 0.7;
+}
+
+.palette-swatch {
+  width: 18px;
+  height: 18px;
+  margin-right: 6px;
+  border: 1px solid #333;
+}
+
+.palette-role-select {
+  flex: 1;
+  max-width: 150px;
+}
+
+.palette-actions {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.palette-actions button {
+  flex: 1;
+  font-size: 11px;
+  padding: 2px 4px;
+}
+
+/* WebKit-based browsers (Chrome, Edge, Safari) scrollbar for UI panel */
+#ui-panel::-webkit-scrollbar {
+  width: 6px;
+}
+
+#ui-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#ui-panel::-webkit-scrollbar-thumb {
+  background-color: rgba(200, 200, 200, 0.6);
+  border-radius: 3px;
+}
+
+#ui-panel::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(220, 220, 220, 0.9);
+}
+
+.hidden {
+  display: none !important;
 }
