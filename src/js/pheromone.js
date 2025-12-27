@@ -7,7 +7,13 @@ export var PheromoneType;
 })(PheromoneType || (PheromoneType = {}));
 export class Pheromone {
     constructor(x, y, type) {
-        this.lifeAmount = Config.pheromoneLife;
+        // Type-specific lifetime with global fallback.
+        if (type === PheromoneType.BLUE) {
+            this.lifeAmount = Config.bluePheromoneLife != null ? Config.bluePheromoneLife : Config.pheromoneLife;
+        }
+        else {
+            this.lifeAmount = Config.redPheromoneLife != null ? Config.redPheromoneLife : Config.pheromoneLife;
+        }
         this.life = this.lifeAmount;
         this.pos = new Vector(x, y);
         this.type = type;
@@ -17,13 +23,39 @@ export class Pheromone {
         let alpha = normLife * 255;
         let radius = 3;
 
-        if (Config.pheromoneDiffusionEnabled) {
+        // Type-specific diffusion controls with global defaults.
+        let useDiffusion;
+        let strength;
+        if (this.type === PheromoneType.BLUE) {
+            useDiffusion = Config.bluePheromoneDiffusionEnabled != null ? Config.bluePheromoneDiffusionEnabled : Config.pheromoneDiffusionEnabled;
+            strength = Config.bluePheromoneDiffusionStrength != null ? Config.bluePheromoneDiffusionStrength : Config.pheromoneDiffusionStrength;
+        }
+        else {
+            useDiffusion = Config.redPheromoneDiffusionEnabled != null ? Config.redPheromoneDiffusionEnabled : Config.pheromoneDiffusionEnabled;
+            strength = Config.redPheromoneDiffusionStrength != null ? Config.redPheromoneDiffusionStrength : Config.pheromoneDiffusionStrength;
+        }
+        if (strength == null)
+            strength = 1.0;
+
+        if (useDiffusion) {
             const ageFactor = 1 - normLife; // 0 = fresh, 1 = old
-            const strength = Config.pheromoneDiffusionStrength != null ? Config.pheromoneDiffusionStrength : 1.0;
             // Older pheromones spread out and fade, similar to the sensing kernel.
             radius += ageFactor * 3 * strength;
             alpha *= 1 - 0.6 * ageFactor * strength;
         }
+
+        // Apply global visual caps, if configured.
+        if (Config.pheromoneMaxRadius != null) {
+            radius = Math.min(radius, Config.pheromoneMaxRadius);
+        }
+        const intensityFactor = Config.pheromoneMaxIntensity != null ? Config.pheromoneMaxIntensity : 1.0;
+        if (intensityFactor !== 1.0) {
+            alpha *= intensityFactor;
+        }
+        if (alpha > 255)
+            alpha = 255;
+        if (alpha < 0)
+            alpha = 0;
 
             const hexToRgb = (hex, fallback) => {
                 if (!hex || typeof hex !== "string") return fallback;

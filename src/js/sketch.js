@@ -34,6 +34,7 @@ let lastPanMouseY = 0;
 let simStepAccumulator = 0;
 let mapImage = null;
 let autoPausedForNoFood = false;
+let imageMapLayer = null;
 
 function isEventOnUI(event) {
     if (!event)
@@ -49,21 +50,67 @@ function isEventOnUI(event) {
 
 // Keep reference to current p5 instance for UI callbacks
 let currentP = null;
+
+function rebuildImageMapLayer(p, worldWidth, worldHeight) {
+    if (!(Config.useImageMap && ImageMap.cells && ImageMap.cells.length > 0)) {
+        imageMapLayer = null;
+        return;
+    }
+    imageMapLayer = p.createGraphics(worldWidth, worldHeight);
+    if (imageMapLayer.pixelDensity) {
+        imageMapLayer.pixelDensity(1);
+    }
+    imageMapLayer.noStroke();
+    imageMapLayer.rectMode(imageMapLayer.CENTER);
+    for (const cell of ImageMap.cells) {
+        if (!Config.mapShowAllCells && cell.kind === "empty") continue;
+        const c = cell.renderColor;
+        imageMapLayer.fill(c.r, c.g, c.b);
+        imageMapLayer.rect(cell.worldX, cell.worldY, ImageMap.cellWidth, ImageMap.cellHeight);
+        cell.dirty = false;
+    }
+    ImageMap.dirtyIndices = [];
+}
+
+function flushDirtyImageMapCells() {
+    if (!imageMapLayer || !ImageMap.dirtyIndices || ImageMap.dirtyIndices.length === 0) return;
+    imageMapLayer.noStroke();
+    imageMapLayer.rectMode(imageMapLayer.CENTER);
+    for (const idx of ImageMap.dirtyIndices) {
+        const cell = ImageMap.cells[idx];
+        if (!cell) continue;
+        const c = cell.renderColor;
+        imageMapLayer.fill(c.r, c.g, c.b);
+        imageMapLayer.rect(cell.worldX, cell.worldY, ImageMap.cellWidth, ImageMap.cellHeight);
+        cell.dirty = false;
+    }
+    ImageMap.dirtyIndices = [];
+}
+
 function drawImageMapLayer(p) {
     if (!Config.useImageMap)
         return;
     if (!ImageMap.cells || ImageMap.cells.length === 0)
         return;
-    p.push();
-    p.noStroke();
-    p.rectMode(p.CENTER);
-    for (const cell of ImageMap.cells) {
-        if (!Config.mapShowAllCells && cell.kind === "empty")
-            continue;
-        const c = cell.renderColor;
-        p.fill(c.r, c.g, c.b);
-        p.rect(cell.worldX, cell.worldY, ImageMap.cellWidth, ImageMap.cellHeight);
+    if (!imageMapLayer) {
+        // Fallback: draw directly if layer has not been built yet.
+        p.push();
+        p.noStroke();
+        p.rectMode(p.CENTER);
+        for (const cell of ImageMap.cells) {
+            if (!Config.mapShowAllCells && cell.kind === "empty")
+                continue;
+            const c = cell.renderColor;
+            p.fill(c.r, c.g, c.b);
+            p.rect(cell.worldX, cell.worldY, ImageMap.cellWidth, ImageMap.cellHeight);
+        }
+        p.pop();
+        return;
     }
+    flushDirtyImageMapCells();
+    p.push();
+    p.imageMode(p.CORNER);
+    p.image(imageMapLayer, 0, 0);
     p.pop();
 }
 function initSimulation(p) {
@@ -76,8 +123,12 @@ function initSimulation(p) {
     const worldHeight = Config.simulationHeight || p.height;
 
     if (camera) {
-        const mult = 1 + Config.camLiniency;
-        camera.setBounds(-worldWidth * mult, -worldHeight * mult, (worldWidth / 2) * mult, (worldHeight / 2) * mult);
+        const lin = Config.camLiniency != null ? Config.camLiniency : 0;
+        const marginX = worldWidth * lin;
+        const marginY = worldHeight * lin;
+        // Allow the camera center to move slightly beyond the simulation rectangle,
+        // but clamp so the viewport never shows outside the margins.
+        camera.setBounds(0 - marginX, 0 - marginY, worldWidth + marginX, worldHeight + marginY);
         camera.offset = { x: -worldWidth / 2, y: -worldHeight / 2 };
     }
     // Reset globals
@@ -108,6 +159,7 @@ function initSimulation(p) {
     // and add image-derived obstacles before rebuilding the obstacle grid.
     if (Config.useImageMap && mapImage) {
         buildImageMap(p, mapImage, worldWidth, worldHeight);
+        rebuildImageMapLayer(p, worldWidth, worldHeight);
         // Palette preview is now generated manually via the UI button.
         if (ImageMap.cells && ImageMap.cells.length > 0) {
             const cols = ImageMap.cols;
@@ -383,6 +435,11 @@ function initSimulation(p) {
             nest.spawnFood(3 * worldWidth / 4, 3 * worldHeight / 4, Config.foodSpawnRadius);
         }
     }
+    // Pre-populate visibleFood for prestart visualization before any simulation steps run.
+    const foodRect = new Rectangle(worldWidth / 2, worldHeight / 2, worldWidth / 2, worldHeight / 2);
+    visibleFood = Global.food.query(foodRect, []);
+    visibleRedPheromones = [];
+    visibleBluePheromones = [];
     mousePos = new Vector(0, 0);
     autoPausedForNoFood = false;
     updateStatusMessage("");
@@ -393,9 +450,13 @@ function resetCameraView(p) {
         return;
     const worldWidth = Config.simulationWidth || p.width;
     const worldHeight = Config.simulationHeight || p.height;
-    const mult = 1 + Config.camLiniency;
+    const lin = Config.camLiniency != null ? Config.camLiniency : 0;
     if (Config.useCamBounds) {
-        camera.setBounds(-worldWidth * mult, -worldHeight * mult, (worldWidth / 2) * mult, (worldHeight / 2) * mult);
+        const marginX = worldWidth * lin;
+        const marginY = worldHeight * lin;
+        camera.setBounds(0 - marginX, 0 - marginY, worldWidth + marginX, worldHeight + marginY);
+    } else {
+        camera.bounds = null;
     }
     camera.offset = { x: -worldWidth / 2, y: -worldHeight / 2 };
     camera.zoom = 1;
@@ -480,7 +541,7 @@ function drawWorld(p) {
         if (Config.useClusteredFood) {
             renderClusteredFood(p, visibleFood);
         }
-        else {
+        else { // TODO: this is redundant with food.js Food.draw()!
             // Fallback: draw individual food points when clustered mode is off.
             p.noStroke();
             const hexToRgb = (hex, fallback) => {
@@ -501,7 +562,7 @@ function drawWorld(p) {
             };
             const defaults = { r: 0, g: 255, b: 0 };
             const rgb = hexToRgb(Config.foodColor, defaults);
-            const radius = Config.foodRenderRadius != null ? Config.foodRenderRadius : 4;
+            const radius = Config.foodRenderRadius != null ? Config.foodRenderRadius : 6;
             p.fill(rgb.r, rgb.g, rgb.b);
             for (const elem of visibleFood) {
                 const food = elem.value;
@@ -620,12 +681,7 @@ const sketch = (p) => {
         p.createCanvas(p.windowWidth, p.windowHeight);
         currentP = p;
         camera = new Camera(p);
-        const mult = 1 + Config.camLiniency;
-        if (Config.useCamBounds) {
-            camera.setBounds(-Config.simulationWidth*mult, -Config.simulationHeight*mult, Config.simulationWidth/2*mult, Config.simulationHeight/2*mult); // buggy
-        }
-        camera.offset ={x: -Config.simulationWidth / 2, y: -Config.simulationHeight / 2};
-        // need to set these point-mirrored for some reason
+        resetCameraView(p);
 
         setupUI({
             getNest: () => nest,
@@ -707,7 +763,7 @@ const sketch = (p) => {
     };
     p.windowResized = () => {
         p.resizeCanvas(p.windowWidth, p.windowHeight);
-        initSimulation(p);
+        //initSimulation(p);
     };
     p.keyPressed = () => {
         if (p.key === "f" || p.key === "F")
@@ -766,25 +822,56 @@ const sketch = (p) => {
         const world = camera ? camera.screenToWorld(p.mouseX, p.mouseY) : { x: p.mouseX, y: p.mouseY };
         if (Global.tool === 0) {
             if (Config.useImageMap && Config.mapFoodPlacementCellsOnly && ImageMap.cells && ImageMap.cells.length > 0) {
-                // Snap placement to the nearest food cell.
-                let bestIdx = -1;
-                let bestDistSq = Infinity;
+                // Place food only on food-designated grid cells, but
+                // interpret the user's click as a cluster centered at
+                // the clicked position. All food is snapped to nearby
+                // valid cells so that positions conform to the grid.
+                const radius = Config.foodSpawnRadius != null ? Config.foodSpawnRadius : 50;
+                const radiusSq = radius * radius;
+
+                const candidateIndices = [];
                 for (let i = 0; i < ImageMap.cells.length; i++) {
                     const cell = ImageMap.cells[i];
                     if (cell.kind !== "food") continue;
                     const dx = cell.worldX - world.x;
                     const dy = cell.worldY - world.y;
                     const d2 = dx * dx + dy * dy;
-                    if (d2 < bestDistSq) {
-                        bestDistSq = d2;
-                        bestIdx = i;
+                    if (d2 <= radiusSq) {
+                        candidateIndices.push(i);
                     }
                 }
-                if (bestIdx >= 0) {
-                    const cell = ImageMap.cells[bestIdx];
-                    const food = new Food(cell.worldX, cell.worldY);
-                    food.mapCellIndex = bestIdx;
-                    Global.food.insert(food);
+
+                if (candidateIndices.length > 0) {
+                    // Spawn one food unit at each qualifying food cell.
+                    for (const idx of candidateIndices) {
+                        const cell = ImageMap.cells[idx];
+                        const food = new Food(cell.worldX, cell.worldY);
+                        food.mapCellIndex = idx;
+                        Global.food.insert(food);
+                    }
+                } else {
+                    // Fallback: no food cells within the radius; snap to
+                    // the nearest food cell so clicks far from the grid
+                    // still produce usable food.
+                    let bestIdx = -1;
+                    let bestDistSq = Infinity;
+                    for (let i = 0; i < ImageMap.cells.length; i++) {
+                        const cell = ImageMap.cells[i];
+                        if (cell.kind !== "food") continue;
+                        const dx = cell.worldX - world.x;
+                        const dy = cell.worldY - world.y;
+                        const d2 = dx * dx + dy * dy;
+                        if (d2 < bestDistSq) {
+                            bestDistSq = d2;
+                            bestIdx = i;
+                        }
+                    }
+                    if (bestIdx >= 0) {
+                        const cell = ImageMap.cells[bestIdx];
+                        const food = new Food(cell.worldX, cell.worldY);
+                        food.mapCellIndex = bestIdx;
+                        Global.food.insert(food);
+                    }
                 }
             }
             else {

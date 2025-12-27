@@ -5,6 +5,8 @@ export class Camera {
     this.renderer = this.layer._renderer;
     this.offset = { x: 0, y: 0 };
     this.zoom = 1;
+    // World-space bounds for the camera center, if enabled.
+    // Stored as { minX, minY, maxX, maxY } in world coordinates.
     this.bounds = null;
   }
 
@@ -19,39 +21,57 @@ export class Camera {
   }
 
   pan(dx, dy, boundsCheck = false) {
+    this.offset.x += dx / this.zoom;
+    this.offset.y += dy / this.zoom;
     if (boundsCheck && this.bounds) {
       this.checkBounds();
     }
-    this.offset.x += dx / this.zoom;
-    this.offset.y += dy / this.zoom;
   }
 
-  setBounds(x, y, w, h) {
-    this.bounds = { x, y, w, h };
+  // Set world-space bounds for the camera center.
+  // minX/minY/maxX/maxY are in world coordinates.
+  setBounds(minX, minY, maxX, maxY) {
+    this.bounds = { minX, minY, maxX, maxY };
+    this.checkBounds();
   }
 
   checkBounds() {
-    if (this.bounds) {
-      let x = this.offset.x;
-      let y = this.offset.y;
-      let w = this.bounds.w / this.zoom;
-      let h = this.bounds.h / this.zoom;
+    if (!this.bounds) return;
 
-      if (x < this.bounds.x) {
-        x = this.bounds.x;
-      } else if (x > this.bounds.x + w) {
-        x = this.bounds.x + w;
-      }
+    const { minX, minY, maxX, maxY } = this.bounds;
+    if (minX == null || minY == null || maxX == null || maxY == null) return;
 
-      if (y < this.bounds.y) {
-        y = this.bounds.y;
-      } else if (y > this.bounds.y + h) {
-        y = this.bounds.y + h;
-      }
+    // Current camera center in world space.
+    let centerX = -this.offset.x;
+    let centerY = -this.offset.y;
 
-      this.offset.x = x;
-      this.offset.y = y;
+    // Half of the visible viewport in world units at the current zoom.
+    const halfViewW = this.renderer.width / (2 * this.zoom);
+    const halfViewH = this.renderer.height / (2 * this.zoom);
+
+    // Allowed range for the camera center so that the viewport stays inside bounds.
+    let minCenterX = minX + halfViewW;
+    let maxCenterX = maxX - halfViewW;
+    let minCenterY = minY + halfViewH;
+    let maxCenterY = maxY - halfViewH;
+
+    // If the world (plus margins) is smaller than the viewport, just lock to the center.
+    if (minCenterX > maxCenterX) {
+      centerX = (minX + maxX) * 0.5;
+    } else {
+      if (centerX < minCenterX) centerX = minCenterX;
+      else if (centerX > maxCenterX) centerX = maxCenterX;
     }
+
+    if (minCenterY > maxCenterY) {
+      centerY = (minY + maxY) * 0.5;
+    } else {
+      if (centerY < minCenterY) centerY = minCenterY;
+      else if (centerY > maxCenterY) centerY = maxCenterY;
+    }
+
+    this.offset.x = -centerX;
+    this.offset.y = -centerY;
   } 
 
   zoomAt(delta, mx, my, forceNew = null, canvasWidth = this.layer.width, canvasHeight = this.layer.height) {
@@ -75,6 +95,9 @@ export class Camera {
     // Adjust offset so the point under the mouse stays in place
     this.offset.x = (mx - canvasCenterX) / this.zoom - worldX;
     this.offset.y = (my - canvasCenterY) / this.zoom - worldY;
+
+    // Keep the view within bounds after zoom changes.
+    this.checkBounds();
   }
 
   // Convert world to screen coordinates

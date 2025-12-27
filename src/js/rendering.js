@@ -25,7 +25,7 @@ export function renderClusteredPheromones(p, visibleRedPheromones, visibleBluePh
   for (let elem of visibleRedPheromones) accumulatePhero(redCells, elem);
   for (let elem of visibleBluePheromones) accumulatePhero(blueCells, elem);
 
-  const drawPheroBuckets = (map, r, g, b) => {
+  const drawPheroBuckets = (map, r, g, b, useDiffusion, diffusionStrength) => {
     for (const bucket of map.values()) {
       const x = bucket.xSum / bucket.count;
       const y = bucket.ySum / bucket.count;
@@ -34,21 +34,28 @@ export function renderClusteredPheromones(p, visibleRedPheromones, visibleBluePh
 
       // Base alpha scales with intensity and count.
       let alpha = Math.min(255, avgIntensity * 255 * Math.min(3, bucket.count));
-      if (Config.pheromoneDiffusionEnabled) {
+      if (useDiffusion) {
         // Match behavioural diffusion: older pheromones are broader but weaker.
         const ageFactor = 1 - avgIntensity; // 0 = fresh, 1 = old
-        const strength = Config.pheromoneDiffusionStrength != null ? Config.pheromoneDiffusionStrength : 1.0;
+        const strength = diffusionStrength != null ? diffusionStrength : 1.0;
         alpha *= 1 - 0.6 * ageFactor * strength;
         radius += ageFactor * 3 * strength;
       }
       if (alpha < 5) continue; 
       // too faint to matter
 
-     
-      if (Config.pheromoneDiffusionEnabled) {
-       
+      // Apply global visual caps, if configured.
+      if (Config.pheromoneMaxRadius != null) {
+        radius = Math.min(radius, Config.pheromoneMaxRadius);
       }
+      const intensityFactor = Config.pheromoneMaxIntensity != null ? Config.pheromoneMaxIntensity : 1.0;
+      if (intensityFactor !== 1.0) {
+        alpha *= intensityFactor;
+      }
+      if (alpha > 255) alpha = 255;
+      if (alpha < 0) alpha = 0;
 
+     
       p.noStroke();
       p.fill(r, g, b, alpha);
       p.circle(x, y, radius * 2);
@@ -77,8 +84,16 @@ export function renderClusteredPheromones(p, visibleRedPheromones, visibleBluePh
   const redRGB = hexToRgb(Config.pheromoneRedColor, redDefaults);
   const blueRGB = hexToRgb(Config.pheromoneBlueColor, blueDefaults);
 
-  drawPheroBuckets(redCells, redRGB.r, redRGB.g, redRGB.b);
-  drawPheroBuckets(blueCells, blueRGB.r, blueRGB.g, blueRGB.b);
+  const redUseDiff = Config.redPheromoneDiffusionEnabled != null ? Config.redPheromoneDiffusionEnabled : Config.pheromoneDiffusionEnabled;
+  let redStrength = Config.redPheromoneDiffusionStrength != null ? Config.redPheromoneDiffusionStrength : Config.pheromoneDiffusionStrength;
+  if (redStrength == null) redStrength = 1.0;
+
+  const blueUseDiff = Config.bluePheromoneDiffusionEnabled != null ? Config.bluePheromoneDiffusionEnabled : Config.pheromoneDiffusionEnabled;
+  let blueStrength = Config.bluePheromoneDiffusionStrength != null ? Config.bluePheromoneDiffusionStrength : Config.pheromoneDiffusionStrength;
+  if (blueStrength == null) blueStrength = 1.0;
+
+  drawPheroBuckets(redCells, redRGB.r, redRGB.g, redRGB.b, redUseDiff, redStrength);
+  drawPheroBuckets(blueCells, blueRGB.r, blueRGB.g, blueRGB.b, blueUseDiff, blueStrength);
 }
 
 export function renderClusteredFood(p, visibleFood) {

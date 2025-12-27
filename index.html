@@ -73,6 +73,91 @@
                         <label for="antWidth">Ant width</label>
                         <input id="antWidth" type="number" min="2" max="20" step="1">
                     </div>
+
+                    <div class="control prestart-only control-inline">
+                        <label for="antPheromoneFrequency">Pheromone drop frequency (frames)</label>
+                        <input id="antPheromoneFrequency" type="number" min="1" max="60" step="1">
+                    </div>
+
+                    <div class="control prestart-only control-inline">
+                        <label for="obstacleAvoidanceRandomness">Obstacle avoidance randomness</label>
+                        <input id="obstacleAvoidanceRandomness" type="number" min="0" max="2" step="0.05">
+                    </div>
+
+                    <div class="control prestart-only control-inline">
+                        <label for="obstacleAvoidStrength">Obstacle avoidance strength</label>
+                        <input id="obstacleAvoidStrength" type="number" min="0" max="2" step="0.05">
+                    </div>
+
+                    <div class="control prestart-only control-inline">
+                        <label for="wanderSpeedFactor">Wander speed factor</label>
+                        <input id="wanderSpeedFactor" type="number" min="0" max="2" step="0.05">
+                    </div>
+
+                    <div class="control prestart-only control-inline">
+                        <label for="trailSpeedFactor">Trail speed factor</label>
+                        <input id="trailSpeedFactor" type="number" min="0" max="2" step="0.05">
+                    </div>
+
+                    <div class="control prestart-only control-inline">
+                        <label for="headedToFoodSpeedFactor">Headed-to-food speed factor</label>
+                        <input id="headedToFoodSpeedFactor" type="number" min="0" max="2" step="0.05">
+                    </div>
+
+                    <div class="control prestart-only control-inline">
+                        <label for="headedHomeSpeedFactor">Headed-home speed factor</label>
+                        <input id="headedHomeSpeedFactor" type="number" min="0" max="2" step="0.05">
+                    </div>
+
+                    <div class="control prestart-only control-inline">
+                        <label for="obstacleSideSpeedFactor">Obstacle side-hit speed factor</label>
+                        <input id="obstacleSideSpeedFactor" type="number" min="0" max="2" step="0.05">
+                    </div>
+
+                    <div class="control prestart-only control-inline">
+                        <label for="obstacleFrontSpeedFactor">Obstacle front-hit speed factor</label>
+                        <input id="obstacleFrontSpeedFactor" type="number" min="0" max="2" step="0.05">
+                    </div>
+
+                    <div class="control prestart-only control-inline">
+                        <label for="collisionTurnMinDegrees">Collision min turn (deg)</label>
+                        <input id="collisionTurnMinDegrees" type="number" min="0" max="360" step="5">
+                    </div>
+
+                    <div class="control prestart-only control-inline">
+                        <label for="collisionTurnMaxDegrees">Collision max turn (deg)</label>
+                        <input id="collisionTurnMaxDegrees" type="number" min="0" max="360" step="5">
+                    </div>
+
+                    <div class="control prestart-only control-inline">
+                        <label for="collisionPauseFrames">Collision pause frames</label>
+                        <input id="collisionPauseFrames" type="number" min="0" max="60" step="1">
+                    </div>
+
+                    <div class="control prestart-only control-inline">
+                        <label for="boundaryNudgeDistance">Boundary nudge distance</label>
+                        <input id="boundaryNudgeDistance" type="number" min="0" max="20" step="0.5">
+                    </div>
+
+                    <div class="control prestart-only control-inline">
+                        <label for="foodPickupPauseFrames">Food pickup pause (frames)</label>
+                        <input id="foodPickupPauseFrames" type="number" min="0" max="120" step="1">
+                    </div>
+
+                    <div class="control prestart-only control-inline">
+                        <label for="foodDropPauseFrames">Food drop pause (frames)</label>
+                        <input id="foodDropPauseFrames" type="number" min="0" max="120" step="1">
+                    </div>
+
+                    <div class="control prestart-only control-inline">
+                        <label for="postPauseEaseFrames">Post-pause ease frames</label>
+                        <input id="postPauseEaseFrames" type="number" min="0" max="120" step="1">
+                    </div>
+
+                    <div class="control prestart-only control-inline">
+                        <label for="postPauseMinSpeedFactor">Post-pause min speed factor</label>
+                        <input id="postPauseMinSpeedFactor" type="number" min="0" max="2" step="0.05">
+                    </div>
                 </div>
             </div>
 
@@ -111,6 +196,20 @@
                     <div class="control prestart-only">
                         <label><input id="pauseWhenNoFood" type="checkbox"> Pause when all food is collected</label>
                     </div>
+
+                    <div class="control prestart-only">
+                        <label><input id="useCamBounds" type="checkbox"> Limit camera to simulation bounds</label>
+                    </div>
+
+                    <div class="control prestart-only control-inline">
+                        <label for="camLiniency">Camera leniency</label>
+                        <input id="camLiniency" type="number" min="0" max="2" step="0.05">
+                    </div>
+
+                    <div class="control prestart-only control-inline">
+                        <label for="quadTreeCapacity">QuadTree capacity</label>
+                        <input id="quadTreeCapacity" type="number" min="1" max="32" step="1">
+                    </div>
                 </div>
             </div>
 
@@ -135,6 +234,16 @@
                         <span id="pheromoneLifeValue" class="value"></span>
                     </div>
 
+                    <div class="control prestart-only control-inline">
+                        <label for="redPheromoneLife">Red pheromone lifetime (override)</label>
+                        <input id="redPheromoneLife" type="number" min="0" max="5000" step="10">
+                    </div>
+
+                    <div class="control prestart-only control-inline">
+                        <label for="bluePheromoneLife">Blue pheromone lifetime (override)</label>
+                        <input id="bluePheromoneLife" type="number" min="0" max="5000" step="10">
+                    </div>
+
                     <div class="control">
                         <label for="pheromoneLowScoreThreshold">Pheromone low-score threshold</label>
                         <input id="pheromoneLowScoreThreshold" type="range" min="0" max="1" step="0.01">
@@ -157,14 +266,46 @@
                         <span id="pheromoneDiffusionStrengthValue" class="value"></span>
                     </div>
 
-                    <div class="control hidden">
+                    <div class="control prestart-only control-inline">
+                        <label for="pheromoneMaxRadius">Max pheromone radius (pixels)</label>
+                        <input id="pheromoneMaxRadius" type="number" min="1" max="64" step="1">
+                    </div>
+
+                    <div class="control prestart-only control-inline">
+                        <label for="pheromoneMaxIntensity">Pheromone max intensity (0–1)</label>
+                        <input id="pheromoneMaxIntensity" type="number" min="0" max="1" step="0.05">
+                    </div>
+
+                    <div class="control prestart-only">
+                        <label><input id="redPheromoneDiffusionEnabled" type="checkbox"> Red pheromone diffusion override</label>
+                    </div>
+
+                    <div class="control prestart-only control-inline">
+                        <label for="redPheromoneDiffusionStrength">Red diffusion strength</label>
+                        <input id="redPheromoneDiffusionStrength" type="number" min="0" max="3" step="0.1">
+                    </div>
+
+                    <div class="control prestart-only">
+                        <label><input id="bluePheromoneDiffusionEnabled" type="checkbox"> Blue pheromone diffusion override</label>
+                    </div>
+
+                    <div class="control prestart-only control-inline">
+                        <label for="bluePheromoneDiffusionStrength">Blue diffusion strength</label>
+                        <input id="bluePheromoneDiffusionStrength" type="number" min="0" max="3" step="0.1">
+                    </div>
+
+                    <div class="control prestart-only">
                         <label><input id="searchersFollowHomePheromones" type="checkbox"> Searchers follow home pheromones</label>
                     </div>
 
-                    <div class="control hidden">
+                    <div class="control prestart-only">
                         <label for="searcherHomePheromoneWeight">Home pheromone weight (searchers)</label>
                         <input id="searcherHomePheromoneWeight" type="range" min="0" max="2" step="0.1">
                         <span id="searcherHomePheromoneWeightValue" class="value"></span>
+                    </div>
+
+                    <div class="control prestart-only">
+                        <label><input id="skipPheromoneOnCollisionPause" type="checkbox"> Don't drop pheromones on collision pause frames</label>
                     </div>
 
                     <div class="control">
@@ -231,8 +372,31 @@
                     </div>
 
                     <div class="control prestart-only control-inline">
+                        <label for="foodClusterColor">Food cluster color</label>
+                        <input id="foodClusterColor" type="color">
+                    </div>
+
+                    <div class="control prestart-only control-inline">
+                        <label for="foodClusterTextColor">Food cluster text color</label>
+                        <input id="foodClusterTextColor" type="color">
+                    </div>
+
+                    <div class="control prestart-only control-inline">
                         <label for="obstacleColor">Obstacle color</label>
                         <input id="obstacleColor" type="color">
+                    </div>
+
+                    <div class="control prestart-only control-inline">
+                        <label for="obstacleLineWidth">Obstacle line width</label>
+                        <input id="obstacleLineWidth" type="number" min="1" max="20" step="1">
+                    </div>
+
+                    <div class="control prestart-only">
+                        <label for="obstacleQueryMethod">Obstacle query method (line of sight)</label>
+                        <select id="obstacleQueryMethod">
+                            <option value="0">Grid (cell index, default)</option>
+                            <option value="1">QuadTree</option>
+                        </select>
                     </div>
 
                     <div class="control prestart-only control-inline">
@@ -281,6 +445,15 @@
                     </div>
 
                     <div class="control">
+                        <label><input id="mapNestUseCellSize" type="checkbox"> Use cell-sized nest marker</label>
+                    </div>
+
+                    <div class="control control-inline">
+                        <label for="mapNestCellSizeScale">Nest cell size scale</label>
+                        <input id="mapNestCellSizeScale" type="number" min="0.1" max="2" step="0.05">
+                    </div>
+
+                    <div class="control">
                         <label for="mapImagePath">Map image path</label>
                         <input id="mapImagePath" type="text">
                     </div>
@@ -296,6 +469,16 @@
                         <input id="mapSampleStep" type="number" min="1" max="32" step="1">
                     </div>
 
+                    <div class="control prestart-only">
+                        <label for="mapSampleDepth">Map sample depth (samples per pixel)</label>
+                        <input id="mapSampleDepth" type="number" min="1" max="8" step="1">
+                    </div>
+
+                    <div class="control prestart-only">
+                        <label for="mapFoodUnitsPerCell">Food units per food cell</label>
+                        <input id="mapFoodUnitsPerCell" type="number" min="0" max="50" step="1">
+                    </div>
+
                     <div class="control">
                         <label>Image palette</label>
                         <div id="palettePreview" class="palette-preview"></div>
@@ -305,6 +488,13 @@
                             <button id="applyPaletteRolesButton" type="button">Apply roles to map colors</button>
                         </div>
                     </div>
+
+                    <div class="control">
+                        <label for="mapPaletteMinDistance">Palette min distance</label>
+                        <input id="mapPaletteMinDistance" type="range" min="0" max="300" step="1">
+                        <span id="mapPaletteMinDistanceValue" class="value"></span>
+                    </div>
+
 
                     <div class="control control-inline">
                         <label for="mapFoodColor">Food color</label>
@@ -338,12 +528,60 @@
                         <span id="mapColorToleranceValue" class="value"></span>
                     </div>
 
-                    <div class="control">
-                        <label for="mapPaletteMinDistance">Palette min distance</label>
-                        <input id="mapPaletteMinDistance" type="range" min="0" max="300" step="1">
-                        <span id="mapPaletteMinDistanceValue" class="value"></span>
+                    <div class="control prestart-only control-inline">
+                        <label for="mapFoodColorTolerance">Food color tolerance (override)</label>
+                        <input id="mapFoodColorTolerance" type="number" min="0" max="300" step="1">
                     </div>
 
+                    <div class="control prestart-only control-inline">
+                        <label for="mapObstacleColorTolerance">Obstacle color tolerance (override)</label>
+                        <input id="mapObstacleColorTolerance" type="number" min="0" max="300" step="1">
+                    </div>
+
+                    <div class="control prestart-only control-inline">
+                        <label for="mapNestColorTolerance">Nest color tolerance (override)</label>
+                        <input id="mapNestColorTolerance" type="number" min="0" max="300" step="1">
+                    </div>
+
+                    <div class="control prestart-only">
+                        <label>Cell morphology (iterations)</label>
+                    </div>
+
+                    <div class="control prestart-only control-inline">
+                        <label for="mapObstacleDilateIterations">Obstacle dilate</label>
+                        <input id="mapObstacleDilateIterations" type="number" min="0" max="8" step="1">
+                    </div>
+
+                    <div class="control prestart-only control-inline">
+                        <label for="mapObstacleErodeIterations">Obstacle erode</label>
+                        <input id="mapObstacleErodeIterations" type="number" min="0" max="8" step="1">
+                    </div>
+
+                    <div class="control prestart-only control-inline">
+                        <label for="mapFoodDilateIterations">Food dilate</label>
+                        <input id="mapFoodDilateIterations" type="number" min="0" max="8" step="1">
+                    </div>
+
+                    <div class="control prestart-only control-inline">
+                        <label for="mapFoodErodeIterations">Food erode</label>
+                        <input id="mapFoodErodeIterations" type="number" min="0" max="8" step="1">
+                    </div>
+
+                    <div class="control prestart-only control-inline">
+                        <label for="mapNestDilateIterations">Nest dilate</label>
+                        <input id="mapNestDilateIterations" type="number" min="0" max="8" step="1">
+                    </div>
+
+                    <div class="control prestart-only control-inline">
+                        <label for="mapNestErodeIterations">Nest erode</label>
+                        <input id="mapNestErodeIterations" type="number" min="0" max="8" step="1">
+                    </div>
+
+                    <div class="control prestart-only buttons">
+                        <button id="applyMorphologyButton" type="button">Apply morphology (rebuild map)</button>
+                    </div>
+
+                   
                     <div class="control">
                         <label for="colorDistanceMethod">Color distance method</label>
                         <select id="colorDistanceMethod">
@@ -353,6 +591,8 @@
                             <option value="3">CIEDE2000</option>
                         </select>
                     </div>
+
+                    
                 </div>
             </div>
 
@@ -384,6 +624,10 @@
                     <span class="ui-section-chevron">▾</span>
                 </div>
                 <div class="ui-section-body">
+                    <div class="control prestart-only">
+                        <label><input id="showHUD" type="checkbox"> Show HUD/help overlay</label>
+                    </div>
+
                     <div class="control">
                         <label><input id="debugSensors" type="checkbox"> Debug: Sensors (D)</label>
                     </div>

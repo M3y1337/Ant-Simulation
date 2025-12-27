@@ -7,6 +7,8 @@ export const ImageMap = {
   rows: 0,
   cellWidth: 0,
   cellHeight: 0,
+  // Indices of cells whose renderColor changed and need layer updates.
+  dirtyIndices: [],
 };
 
 function parseHexColor(hex) {
@@ -34,6 +36,7 @@ export function buildImageMap(p, img, worldWidth, worldHeight) {
   ImageMap.rows = 0;
   ImageMap.cellWidth = 0;
   ImageMap.cellHeight = 0;
+  ImageMap.dirtyIndices = [];
 
   if (!img) return;
 
@@ -49,7 +52,10 @@ export function buildImageMap(p, img, worldWidth, worldHeight) {
   const foodColor = parseHexColor(Config.mapFoodColor);
   const obstacleColor = parseHexColor(Config.mapObstacleColor);
   const nestColor = parseHexColor(Config.mapNestColor);
-  const tol = Config.mapColorTolerance != null ? Config.mapColorTolerance : 60;
+  const baseTol = Config.mapColorTolerance != null ? Config.mapColorTolerance : 60;
+  const tolFood = Config.mapFoodColorTolerance != null ? Config.mapFoodColorTolerance : baseTol;
+  const tolObstacle = Config.mapObstacleColorTolerance != null ? Config.mapObstacleColorTolerance : baseTol;
+  const tolNest = Config.mapNestColorTolerance != null ? Config.mapNestColorTolerance : baseTol;
   const method = Config.colorDistanceMethod != null ? Config.colorDistanceMethod : 0;
   const foodUnitsPerCell = Config.mapFoodUnitsPerCell || 1;
 
@@ -71,22 +77,22 @@ export function buildImageMap(p, img, worldWidth, worldHeight) {
       let bestKind = "empty";
 
       const dFood = getColorDistance(sample, foodColor, method);
-      if (dFood < bestDist) {
+      if (dFood <= tolFood && dFood < bestDist) {
         bestDist = dFood;
         bestKind = "food";
       }
       const dObs = getColorDistance(sample, obstacleColor, method);
-      if (dObs < bestDist) {
+      if (dObs <= tolObstacle && dObs < bestDist) {
         bestDist = dObs;
         bestKind = "obstacle";
       }
       const dNest = getColorDistance(sample, nestColor, method);
-      if (dNest < bestDist) {
+      if (dNest <= tolNest && dNest < bestDist) {
         bestDist = dNest;
         bestKind = "nest";
       }
 
-      if (bestDist <= tol) {
+      if (bestKind !== "empty") {
         kind = bestKind;
       }
 
@@ -105,8 +111,126 @@ export function buildImageMap(p, img, worldWidth, worldHeight) {
         renderColor: { r, g, b },
         maxFoodUnits,
         foodUnits: maxFoodUnits,
+        dirty: false,
       });
     }
+  }
+
+  applyMorphologyFilters();
+}
+
+function applyMorphologyFilters() {
+  const { cells, cols, rows } = ImageMap;
+  if (!cells || cells.length === 0) return;
+
+  const len = cells.length;
+  const makeMask = (kind) => {
+    const mask = new Array(len);
+    for (let i = 0; i < len; i++) mask[i] = cells[i].kind === kind;
+    return mask;
+  };
+
+  let foodMask = makeMask("food");
+  let obstacleMask = makeMask("obstacle");
+  let nestMask = makeMask("nest");
+
+  const erode = (mask, iterations) => {
+    if (!iterations || iterations <= 0) return mask;
+    const w = cols;
+    const h = rows;
+    let cur = mask.slice();
+    for (let it = 0; it < iterations; it++) {
+      const next = new Array(len).fill(false);
+      for (let row = 0; row < h; row++) {
+        for (let col = 0; col < w; col++) {
+          const idx = row * w + col;
+          if (!cur[idx]) continue;
+          let keep = true;
+          const check = (c, r) => {
+            if (c < 0 || c >= w || r < 0 || r >= h) {
+              keep = false;
+              return;
+            }
+            const ni = r * w + c;
+            if (!cur[ni]) keep = false;
+          };
+          // 4-connected neighbourhood
+          check(col - 1, row);
+          if (!keep) {
+            next[idx] = false;
+            continue;
+          }
+          check(col + 1, row);
+          if (!keep) {
+            next[idx] = false;
+            continue;
+          }
+          check(col, row - 1);
+          if (!keep) {
+            next[idx] = false;
+            continue;
+          }
+          check(col, row + 1);
+          if (!keep) {
+            next[idx] = false;
+            continue;
+          }
+          next[idx] = true;
+        }
+      }
+      cur = next;
+    }
+    return cur;
+  };
+
+  const dilate = (mask, iterations) => {
+    if (!iterations || iterations <= 0) return mask;
+    const w = cols;
+    const h = rows;
+    let cur = mask.slice();
+    for (let it = 0; it < iterations; it++) {
+      const next = cur.slice();
+      for (let row = 0; row < h; row++) {
+        for (let col = 0; col < w; col++) {
+          const idx = row * w + col;
+          if (!cur[idx]) continue;
+          const setIfValid = (c, r) => {
+            if (c < 0 || c >= w || r < 0 || r >= h) return;
+            const ni = r * w + c;
+            next[ni] = true;
+          };
+          // 4-connected neighbourhood
+          setIfValid(col - 1, row);
+          setIfValid(col + 1, row);
+          setIfValid(col, row - 1);
+          setIfValid(col, row + 1);
+        }
+      }
+      cur = next;
+    }
+    return cur;
+  };
+
+  foodMask = erode(foodMask, Config.mapFoodErodeIterations || 0);
+  foodMask = dilate(foodMask, Config.mapFoodDilateIterations || 0);
+
+  obstacleMask = erode(obstacleMask, Config.mapObstacleErodeIterations || 0);
+  obstacleMask = dilate(obstacleMask, Config.mapObstacleDilateIterations || 0);
+
+  nestMask = erode(nestMask, Config.mapNestErodeIterations || 0);
+  nestMask = dilate(nestMask, Config.mapNestDilateIterations || 0);
+
+  // Reassign kinds with a clear priority: obstacle > nest > food.
+  for (let i = 0; i < len; i++) {
+    let kind = "empty";
+    if (obstacleMask[i]) kind = "obstacle";
+    else if (nestMask[i]) kind = "nest";
+    else if (foodMask[i]) kind = "food";
+
+    cells[i].kind = kind;
+    const maxFoodUnits = kind === "food" ? (Config.mapFoodUnitsPerCell || 1) : 0;
+    cells[i].maxFoodUnits = maxFoodUnits;
+    cells[i].foodUnits = maxFoodUnits;
   }
 }
 
@@ -127,4 +251,9 @@ export function onMapFoodConsumed(cellIndex) {
   const b = Math.round(cell.baseColor.b * (1 - t) + depletedColor.b * t);
 
   cell.renderColor = { r, g, b };
+
+  if (!cell.dirty) {
+    cell.dirty = true;
+    ImageMap.dirtyIndices.push(cellIndex);
+  }
 }

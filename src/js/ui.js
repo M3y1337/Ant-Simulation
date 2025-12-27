@@ -47,6 +47,8 @@ let mapSampleStepInput = null;
 let mapShowAllCellsInput = null;
 let nestPlacementModeSelect = null;
 let mapShowNestMarkerInput = null;
+let mapNestUseCellSizeInput = null;
+let mapNestCellSizeScaleInput = null;
 let mapFoodColorInput = null;
 let mapObstacleColorInput = null;
 let mapNestColorInput = null;
@@ -55,7 +57,17 @@ let mapColorToleranceInput = null;
 let mapColorToleranceValueLabel = null;
 let mapPaletteMinDistanceInput = null;
 let mapPaletteMinDistanceValueLabel = null;
+let mapFoodColorToleranceInput = null;
+let mapObstacleColorToleranceInput = null;
+let mapNestColorToleranceInput = null;
 let generatePaletteButton = null;
+let applyMorphologyButton = null;
+let mapObstacleDilateIterationsInput = null;
+let mapObstacleErodeIterationsInput = null;
+let mapFoodDilateIterationsInput = null;
+let mapFoodErodeIterationsInput = null;
+let mapNestDilateIterationsInput = null;
+let mapNestErodeIterationsInput = null;
 let mapFoodRenderCellsOnlyInput = null;
 let mapFoodPlacementCellsOnlyInput = null;
 let colorDistanceMethodSelect = null;
@@ -97,6 +109,47 @@ let pauseWhenNoFoodInput = null;
 let statusMessageLabel = null;
 let paletteColors = [];
 let paletteRoles = [];
+
+// Advanced / prestart-only controls for Config options
+let antPheromoneFrequencyInput = null;
+let obstacleAvoidanceRandomnessInput = null;
+let obstacleAvoidStrengthInput = null;
+let wanderSpeedFactorInput = null;
+let trailSpeedFactorInput = null;
+let headedToFoodSpeedFactorInput = null;
+let headedHomeSpeedFactorInput = null;
+let obstacleSideSpeedFactorInput = null;
+let obstacleFrontSpeedFactorInput = null;
+let collisionTurnMinDegreesInput = null;
+let collisionTurnMaxDegreesInput = null;
+let collisionPauseFramesInput = null;
+let boundaryNudgeDistanceInput = null;
+let foodPickupPauseFramesInput = null;
+let foodDropPauseFramesInput = null;
+let postPauseEaseFramesInput = null;
+let postPauseMinSpeedFactorInput = null;
+
+let useCamBoundsInput = null;
+let camLiniencyInput = null;
+let quadTreeCapacityInput = null;
+
+let redPheromoneLifeInput = null;
+let bluePheromoneLifeInput = null;
+let redPheromoneDiffusionEnabledInput = null;
+let redPheromoneDiffusionStrengthInput = null;
+let bluePheromoneDiffusionEnabledInput = null;
+let bluePheromoneDiffusionStrengthInput = null;
+
+let mapSampleDepthInput = null;
+let mapFoodUnitsPerCellInput = null;
+
+let foodClusterColorInput = null;
+let foodClusterTextColorInput = null;
+let obstacleLineWidthInput = null;
+let obstacleQueryMethodSelect = null;
+let pheromoneMaxRadiusInput = null;
+let pheromoneMaxIntensityInput = null;
+let skipPheromoneOnCollisionPauseInput = null;
 
 // options:
 //  - getNest(): Nest | null
@@ -171,6 +224,8 @@ export function setupUI(options) {
   mapShowAllCellsInput = document.getElementById("mapShowAllCells");
   nestPlacementModeSelect = document.getElementById("nestPlacementMode");
   mapShowNestMarkerInput = document.getElementById("mapShowNestMarker");
+  mapNestUseCellSizeInput = document.getElementById("mapNestUseCellSize");
+  mapNestCellSizeScaleInput = document.getElementById("mapNestCellSizeScale");
   mapFoodColorInput = document.getElementById("mapFoodColor");
   mapObstacleColorInput = document.getElementById("mapObstacleColor");
   mapNestColorInput = document.getElementById("mapNestColor");
@@ -179,7 +234,17 @@ export function setupUI(options) {
   mapColorToleranceValueLabel = document.getElementById("mapColorToleranceValue");
   mapPaletteMinDistanceInput = document.getElementById("mapPaletteMinDistance");
   mapPaletteMinDistanceValueLabel = document.getElementById("mapPaletteMinDistanceValue");
+  mapFoodColorToleranceInput = document.getElementById("mapFoodColorTolerance");
+  mapObstacleColorToleranceInput = document.getElementById("mapObstacleColorTolerance");
+  mapNestColorToleranceInput = document.getElementById("mapNestColorTolerance");
   generatePaletteButton = document.getElementById("generatePaletteButton");
+  applyMorphologyButton = document.getElementById("applyMorphologyButton");
+  mapObstacleDilateIterationsInput = document.getElementById("mapObstacleDilateIterations");
+  mapObstacleErodeIterationsInput = document.getElementById("mapObstacleErodeIterations");
+  mapFoodDilateIterationsInput = document.getElementById("mapFoodDilateIterations");
+  mapFoodErodeIterationsInput = document.getElementById("mapFoodErodeIterations");
+  mapNestDilateIterationsInput = document.getElementById("mapNestDilateIterations");
+  mapNestErodeIterationsInput = document.getElementById("mapNestErodeIterations");
   mapFoodRenderCellsOnlyInput = document.getElementById("mapFoodRenderCellsOnly");
   mapFoodPlacementCellsOnlyInput = document.getElementById("mapFoodPlacementCellsOnly");
   colorDistanceMethodSelect = document.getElementById("colorDistanceMethod");
@@ -210,6 +275,47 @@ export function setupUI(options) {
   resetCameraButton = document.getElementById("resetCameraButton");
   fpsValueLabel = document.getElementById("fpsValue");
   statusMessageLabel = document.getElementById("statusMessage");
+
+  // Advanced / prestart-only controls
+  antPheromoneFrequencyInput = document.getElementById("antPheromoneFrequency");
+  obstacleAvoidanceRandomnessInput = document.getElementById("obstacleAvoidanceRandomness");
+  obstacleAvoidStrengthInput = document.getElementById("obstacleAvoidStrength");
+  wanderSpeedFactorInput = document.getElementById("wanderSpeedFactor");
+  trailSpeedFactorInput = document.getElementById("trailSpeedFactor");
+  headedToFoodSpeedFactorInput = document.getElementById("headedToFoodSpeedFactor");
+  headedHomeSpeedFactorInput = document.getElementById("headedHomeSpeedFactor");
+  obstacleSideSpeedFactorInput = document.getElementById("obstacleSideSpeedFactor");
+  obstacleFrontSpeedFactorInput = document.getElementById("obstacleFrontSpeedFactor");
+  collisionTurnMinDegreesInput = document.getElementById("collisionTurnMinDegrees");
+  collisionTurnMaxDegreesInput = document.getElementById("collisionTurnMaxDegrees");
+  collisionPauseFramesInput = document.getElementById("collisionPauseFrames");
+  boundaryNudgeDistanceInput = document.getElementById("boundaryNudgeDistance");
+  foodPickupPauseFramesInput = document.getElementById("foodPickupPauseFrames");
+  foodDropPauseFramesInput = document.getElementById("foodDropPauseFrames");
+  postPauseEaseFramesInput = document.getElementById("postPauseEaseFrames");
+  postPauseMinSpeedFactorInput = document.getElementById("postPauseMinSpeedFactor");
+
+  useCamBoundsInput = document.getElementById("useCamBounds");
+  camLiniencyInput = document.getElementById("camLiniency");
+  quadTreeCapacityInput = document.getElementById("quadTreeCapacity");
+
+  redPheromoneLifeInput = document.getElementById("redPheromoneLife");
+  bluePheromoneLifeInput = document.getElementById("bluePheromoneLife");
+  redPheromoneDiffusionEnabledInput = document.getElementById("redPheromoneDiffusionEnabled");
+  redPheromoneDiffusionStrengthInput = document.getElementById("redPheromoneDiffusionStrength");
+  bluePheromoneDiffusionEnabledInput = document.getElementById("bluePheromoneDiffusionEnabled");
+  bluePheromoneDiffusionStrengthInput = document.getElementById("bluePheromoneDiffusionStrength");
+
+  mapSampleDepthInput = document.getElementById("mapSampleDepth");
+  mapFoodUnitsPerCellInput = document.getElementById("mapFoodUnitsPerCell");
+
+  foodClusterColorInput = document.getElementById("foodClusterColor");
+  foodClusterTextColorInput = document.getElementById("foodClusterTextColor");
+  obstacleLineWidthInput = document.getElementById("obstacleLineWidth");
+  obstacleQueryMethodSelect = document.getElementById("obstacleQueryMethod");
+  pheromoneMaxRadiusInput = document.getElementById("pheromoneMaxRadius");
+  pheromoneMaxIntensityInput = document.getElementById("pheromoneMaxIntensity");
+  skipPheromoneOnCollisionPauseInput = document.getElementById("skipPheromoneOnCollisionPause");
 
   antColorInput = document.getElementById("antColor");
   antSizeInput = document.getElementById("antSize");
@@ -316,6 +422,176 @@ export function setupUI(options) {
     });
   }
 
+  if (antPheromoneFrequencyInput) {
+    antPheromoneFrequencyInput.value = String(Config.antPheromoneFrequency);
+    antPheromoneFrequencyInput.addEventListener("input", () => {
+      const value = parseInt(antPheromoneFrequencyInput.value, 10);
+      if (!Number.isNaN(value) && value > 0) {
+        Config.antPheromoneFrequency = value;
+      }
+    });
+  }
+
+  if (obstacleAvoidanceRandomnessInput) {
+    obstacleAvoidanceRandomnessInput.value = String(Config.obstacleAvoidanceRandomness);
+    obstacleAvoidanceRandomnessInput.addEventListener("input", () => {
+      const value = parseFloat(obstacleAvoidanceRandomnessInput.value);
+      if (!Number.isNaN(value) && value >= 0) {
+        Config.obstacleAvoidanceRandomness = value;
+      }
+    });
+  }
+
+  if (obstacleAvoidStrengthInput) {
+    obstacleAvoidStrengthInput.value = String(Config.obstacleAvoidStrength);
+    obstacleAvoidStrengthInput.addEventListener("input", () => {
+      const value = parseFloat(obstacleAvoidStrengthInput.value);
+      if (!Number.isNaN(value) && value >= 0) {
+        Config.obstacleAvoidStrength = value;
+      }
+    });
+  }
+
+  if (wanderSpeedFactorInput) {
+    wanderSpeedFactorInput.value = String(Config.wanderSpeedFactor);
+    wanderSpeedFactorInput.addEventListener("input", () => {
+      const value = parseFloat(wanderSpeedFactorInput.value);
+      if (!Number.isNaN(value) && value >= 0) {
+        Config.wanderSpeedFactor = value;
+      }
+    });
+  }
+
+  if (trailSpeedFactorInput) {
+    trailSpeedFactorInput.value = String(Config.trailSpeedFactor);
+    trailSpeedFactorInput.addEventListener("input", () => {
+      const value = parseFloat(trailSpeedFactorInput.value);
+      if (!Number.isNaN(value) && value >= 0) {
+        Config.trailSpeedFactor = value;
+      }
+    });
+  }
+
+  if (headedToFoodSpeedFactorInput) {
+    headedToFoodSpeedFactorInput.value = String(Config.headedToFoodSpeedFactor);
+    headedToFoodSpeedFactorInput.addEventListener("input", () => {
+      const value = parseFloat(headedToFoodSpeedFactorInput.value);
+      if (!Number.isNaN(value) && value >= 0) {
+        Config.headedToFoodSpeedFactor = value;
+      }
+    });
+  }
+
+  if (headedHomeSpeedFactorInput) {
+    headedHomeSpeedFactorInput.value = String(Config.headedHomeSpeedFactor);
+    headedHomeSpeedFactorInput.addEventListener("input", () => {
+      const value = parseFloat(headedHomeSpeedFactorInput.value);
+      if (!Number.isNaN(value) && value >= 0) {
+        Config.headedHomeSpeedFactor = value;
+      }
+    });
+  }
+
+  if (obstacleSideSpeedFactorInput) {
+    obstacleSideSpeedFactorInput.value = String(Config.obstacleSideSpeedFactor);
+    obstacleSideSpeedFactorInput.addEventListener("input", () => {
+      const value = parseFloat(obstacleSideSpeedFactorInput.value);
+      if (!Number.isNaN(value) && value >= 0) {
+        Config.obstacleSideSpeedFactor = value;
+      }
+    });
+  }
+
+  if (obstacleFrontSpeedFactorInput) {
+    obstacleFrontSpeedFactorInput.value = String(Config.obstacleFrontSpeedFactor);
+    obstacleFrontSpeedFactorInput.addEventListener("input", () => {
+      const value = parseFloat(obstacleFrontSpeedFactorInput.value);
+      if (!Number.isNaN(value) && value >= 0) {
+        Config.obstacleFrontSpeedFactor = value;
+      }
+    });
+  }
+
+  if (collisionTurnMinDegreesInput) {
+    collisionTurnMinDegreesInput.value = String(Config.collisionTurnMinDegrees);
+    collisionTurnMinDegreesInput.addEventListener("input", () => {
+      const value = parseFloat(collisionTurnMinDegreesInput.value);
+      if (!Number.isNaN(value) && value >= 0) {
+        Config.collisionTurnMinDegrees = value;
+      }
+    });
+  }
+
+  if (collisionTurnMaxDegreesInput) {
+    collisionTurnMaxDegreesInput.value = String(Config.collisionTurnMaxDegrees);
+    collisionTurnMaxDegreesInput.addEventListener("input", () => {
+      const value = parseFloat(collisionTurnMaxDegreesInput.value);
+      if (!Number.isNaN(value) && value >= 0) {
+        Config.collisionTurnMaxDegrees = value;
+      }
+    });
+  }
+
+  if (collisionPauseFramesInput) {
+    collisionPauseFramesInput.value = String(Config.collisionPauseFrames);
+    collisionPauseFramesInput.addEventListener("input", () => {
+      const value = parseInt(collisionPauseFramesInput.value, 10);
+      if (!Number.isNaN(value) && value >= 0) {
+        Config.collisionPauseFrames = value;
+      }
+    });
+  }
+
+  if (boundaryNudgeDistanceInput) {
+    boundaryNudgeDistanceInput.value = String(Config.boundaryNudgeDistance);
+    boundaryNudgeDistanceInput.addEventListener("input", () => {
+      const value = parseFloat(boundaryNudgeDistanceInput.value);
+      if (!Number.isNaN(value) && value >= 0) {
+        Config.boundaryNudgeDistance = value;
+      }
+    });
+  }
+
+  if (foodPickupPauseFramesInput) {
+    foodPickupPauseFramesInput.value = String(Config.foodPickupPauseFrames);
+    foodPickupPauseFramesInput.addEventListener("input", () => {
+      const value = parseInt(foodPickupPauseFramesInput.value, 10);
+      if (!Number.isNaN(value) && value >= 0) {
+        Config.foodPickupPauseFrames = value;
+      }
+    });
+  }
+
+  if (foodDropPauseFramesInput) {
+    foodDropPauseFramesInput.value = String(Config.foodDropPauseFrames);
+    foodDropPauseFramesInput.addEventListener("input", () => {
+      const value = parseInt(foodDropPauseFramesInput.value, 10);
+      if (!Number.isNaN(value) && value >= 0) {
+        Config.foodDropPauseFrames = value;
+      }
+    });
+  }
+
+  if (postPauseEaseFramesInput) {
+    postPauseEaseFramesInput.value = String(Config.postPauseEaseFrames);
+    postPauseEaseFramesInput.addEventListener("input", () => {
+      const value = parseInt(postPauseEaseFramesInput.value, 10);
+      if (!Number.isNaN(value) && value >= 0) {
+        Config.postPauseEaseFrames = value;
+      }
+    });
+  }
+
+  if (postPauseMinSpeedFactorInput) {
+    postPauseMinSpeedFactorInput.value = String(Config.postPauseMinSpeedFactor);
+    postPauseMinSpeedFactorInput.addEventListener("input", () => {
+      const value = parseFloat(postPauseMinSpeedFactorInput.value);
+      if (!Number.isNaN(value) && value >= 0) {
+        Config.postPauseMinSpeedFactor = value;
+      }
+    });
+  }
+
   if (simulationSpeedInput) {
     simulationSpeedInput.value = String(Config.simulationSpeed);
     if (simulationSpeedValueLabel) simulationSpeedValueLabel.textContent = simulationSpeedInput.value;
@@ -364,6 +640,33 @@ export function setupUI(options) {
     });
   }
 
+  if (useCamBoundsInput) {
+    useCamBoundsInput.checked = !!Config.useCamBounds;
+    useCamBoundsInput.addEventListener("change", () => {
+      Config.useCamBounds = useCamBoundsInput.checked;
+    });
+  }
+
+  if (camLiniencyInput) {
+    camLiniencyInput.value = String(Config.camLiniency);
+    camLiniencyInput.addEventListener("input", () => {
+      const value = parseFloat(camLiniencyInput.value);
+      if (!Number.isNaN(value) && value >= 0) {
+        Config.camLiniency = value;
+      }
+    });
+  }
+
+  if (quadTreeCapacityInput) {
+    quadTreeCapacityInput.value = String(Config.quadTreeCapacity);
+    quadTreeCapacityInput.addEventListener("input", () => {
+      const value = parseInt(quadTreeCapacityInput.value, 10);
+      if (!Number.isNaN(value) && value > 0) {
+        Config.quadTreeCapacity = value;
+      }
+    });
+  }
+
   if (pheromoneLifeInput) {
     pheromoneLifeInput.value = String(Config.pheromoneLife);
     if (pheromoneLifeValueLabel) pheromoneLifeValueLabel.textContent = pheromoneLifeInput.value;
@@ -372,6 +675,34 @@ export function setupUI(options) {
       if (!Number.isNaN(value)) {
         Config.pheromoneLife = value;
         if (pheromoneLifeValueLabel) pheromoneLifeValueLabel.textContent = pheromoneLifeInput.value;
+      }
+    });
+  }
+
+  if (redPheromoneLifeInput) {
+    const life = Config.redPheromoneLife != null ? Config.redPheromoneLife : "";
+    redPheromoneLifeInput.value = life === "" ? "" : String(life);
+    redPheromoneLifeInput.placeholder = String(Config.pheromoneLife);
+    redPheromoneLifeInput.addEventListener("input", () => {
+      const value = parseInt(redPheromoneLifeInput.value, 10);
+      if (Number.isNaN(value)) {
+        Config.redPheromoneLife = null;
+      } else if (value >= 0) {
+        Config.redPheromoneLife = value;
+      }
+    });
+  }
+
+  if (bluePheromoneLifeInput) {
+    const life = Config.bluePheromoneLife != null ? Config.bluePheromoneLife : "";
+    bluePheromoneLifeInput.value = life === "" ? "" : String(life);
+    bluePheromoneLifeInput.placeholder = String(Config.pheromoneLife);
+    bluePheromoneLifeInput.addEventListener("input", () => {
+      const value = parseInt(bluePheromoneLifeInput.value, 10);
+      if (Number.isNaN(value)) {
+        Config.bluePheromoneLife = null;
+      } else if (value >= 0) {
+        Config.bluePheromoneLife = value;
       }
     });
   }
@@ -419,6 +750,80 @@ export function setupUI(options) {
     });
   }
 
+  if (pheromoneMaxRadiusInput) {
+    const val = Config.pheromoneMaxRadius != null ? Config.pheromoneMaxRadius : "";
+    pheromoneMaxRadiusInput.value = val === "" ? "" : String(val);
+    pheromoneMaxRadiusInput.addEventListener("input", () => {
+      const value = parseFloat(pheromoneMaxRadiusInput.value);
+      if (Number.isNaN(value)) {
+        Config.pheromoneMaxRadius = null;
+      } else if (value > 0) {
+        Config.pheromoneMaxRadius = value;
+      }
+    });
+  }
+
+  if (pheromoneMaxIntensityInput) {
+    const val = Config.pheromoneMaxIntensity != null ? Config.pheromoneMaxIntensity : 1.0;
+    pheromoneMaxIntensityInput.value = String(val);
+    pheromoneMaxIntensityInput.addEventListener("input", () => {
+      let value = parseFloat(pheromoneMaxIntensityInput.value);
+      if (Number.isNaN(value)) return;
+      if (value < 0) value = 0;
+      Config.pheromoneMaxIntensity = value;
+    });
+  }
+
+  if (redPheromoneDiffusionEnabledInput) {
+    const effective = Config.redPheromoneDiffusionEnabled != null
+      ? Config.redPheromoneDiffusionEnabled
+      : Config.pheromoneDiffusionEnabled;
+    redPheromoneDiffusionEnabledInput.checked = !!effective;
+    redPheromoneDiffusionEnabledInput.addEventListener("change", () => {
+      Config.redPheromoneDiffusionEnabled = redPheromoneDiffusionEnabledInput.checked;
+    });
+  }
+
+  if (redPheromoneDiffusionStrengthInput) {
+    const strength = Config.redPheromoneDiffusionStrength != null
+      ? Config.redPheromoneDiffusionStrength
+      : Config.pheromoneDiffusionStrength;
+    redPheromoneDiffusionStrengthInput.value = String(strength);
+    redPheromoneDiffusionStrengthInput.addEventListener("input", () => {
+      const value = parseFloat(redPheromoneDiffusionStrengthInput.value);
+      if (Number.isNaN(value)) {
+        Config.redPheromoneDiffusionStrength = null;
+      } else if (value >= 0) {
+        Config.redPheromoneDiffusionStrength = value;
+      }
+    });
+  }
+
+  if (bluePheromoneDiffusionEnabledInput) {
+    const effective = Config.bluePheromoneDiffusionEnabled != null
+      ? Config.bluePheromoneDiffusionEnabled
+      : Config.pheromoneDiffusionEnabled;
+    bluePheromoneDiffusionEnabledInput.checked = !!effective;
+    bluePheromoneDiffusionEnabledInput.addEventListener("change", () => {
+      Config.bluePheromoneDiffusionEnabled = bluePheromoneDiffusionEnabledInput.checked;
+    });
+  }
+
+  if (bluePheromoneDiffusionStrengthInput) {
+    const strength = Config.bluePheromoneDiffusionStrength != null
+      ? Config.bluePheromoneDiffusionStrength
+      : Config.pheromoneDiffusionStrength;
+    bluePheromoneDiffusionStrengthInput.value = String(strength);
+    bluePheromoneDiffusionStrengthInput.addEventListener("input", () => {
+      const value = parseFloat(bluePheromoneDiffusionStrengthInput.value);
+      if (Number.isNaN(value)) {
+        Config.bluePheromoneDiffusionStrength = null;
+      } else if (value >= 0) {
+        Config.bluePheromoneDiffusionStrength = value;
+      }
+    });
+  }
+
   if (searchersFollowHomePheromonesInput) {
     searchersFollowHomePheromonesInput.checked = Config.searchersFollowHomePheromones;
     searchersFollowHomePheromonesInput.addEventListener("change", () => {
@@ -435,6 +840,13 @@ export function setupUI(options) {
         Config.searcherHomePheromoneWeight = value;
         if (searcherHomePheromoneWeightValueLabel) searcherHomePheromoneWeightValueLabel.textContent = searcherHomePheromoneWeightInput.value;
       }
+    });
+  }
+
+  if (skipPheromoneOnCollisionPauseInput) {
+    skipPheromoneOnCollisionPauseInput.checked = !!Config.skipPheromoneOnCollisionPause;
+    skipPheromoneOnCollisionPauseInput.addEventListener("change", () => {
+      Config.skipPheromoneOnCollisionPause = skipPheromoneOnCollisionPauseInput.checked;
     });
   }
 
@@ -458,6 +870,41 @@ export function setupUI(options) {
       if (!Number.isNaN(value)) {
         Config.foodClusterCellSize = value;
         if (foodClusterCellSizeValueLabel) foodClusterCellSizeValueLabel.textContent = foodClusterCellSizeInput.value;
+      }
+    });
+  }
+
+  if (foodClusterColorInput) {
+    foodClusterColorInput.value = Config.foodClusterColor || "#00ff00";
+    foodClusterColorInput.addEventListener("input", () => {
+      Config.foodClusterColor = foodClusterColorInput.value;
+    });
+  }
+
+  if (foodClusterTextColorInput) {
+    foodClusterTextColorInput.value = Config.foodClusterTextColor || "#000000";
+    foodClusterTextColorInput.addEventListener("input", () => {
+      Config.foodClusterTextColor = foodClusterTextColorInput.value;
+    });
+  }
+
+  if (obstacleLineWidthInput) {
+    obstacleLineWidthInput.value = String(Config.obstacleLineWidth != null ? Config.obstacleLineWidth : 3);
+    obstacleLineWidthInput.addEventListener("input", () => {
+      const value = parseFloat(obstacleLineWidthInput.value);
+      if (!Number.isNaN(value) && value > 0) {
+        Config.obstacleLineWidth = value;
+      }
+    });
+  }
+
+  if (obstacleQueryMethodSelect) {
+    const method = Config.obstacleQueryMethod != null ? Config.obstacleQueryMethod : 0;
+    obstacleQueryMethodSelect.value = String(method);
+    obstacleQueryMethodSelect.addEventListener("change", () => {
+      const v = parseInt(obstacleQueryMethodSelect.value, 10);
+      if (!Number.isNaN(v)) {
+        Config.obstacleQueryMethod = v;
       }
     });
   }
@@ -591,6 +1038,25 @@ export function setupUI(options) {
     });
   }
 
+  if (mapNestUseCellSizeInput) {
+    mapNestUseCellSizeInput.checked = !!Config.mapNestUseCellSize;
+    mapNestUseCellSizeInput.addEventListener("change", () => {
+      Config.mapNestUseCellSize = mapNestUseCellSizeInput.checked;
+    });
+  }
+
+  if (mapNestCellSizeScaleInput) {
+    mapNestCellSizeScaleInput.value = String(
+      Config.mapNestCellSizeScale != null ? Config.mapNestCellSizeScale : 0.9
+    );
+    mapNestCellSizeScaleInput.addEventListener("input", () => {
+      const value = parseFloat(mapNestCellSizeScaleInput.value);
+      if (!Number.isNaN(value) && value > 0) {
+        Config.mapNestCellSizeScale = value;
+      }
+    });
+  }
+
   if (mapUseImageSizeInput) {
     mapUseImageSizeInput.checked = !!Config.mapUseImageSize;
     mapUseImageSizeInput.addEventListener("change", () => {
@@ -638,6 +1104,17 @@ export function setupUI(options) {
     });
   }
 
+  if (mapSampleDepthInput) {
+    mapSampleDepthInput.value = String(Config.mapSampleDepth != null ? Config.mapSampleDepth : 3);
+    mapSampleDepthInput.addEventListener("input", () => {
+      const value = parseInt(mapSampleDepthInput.value, 10);
+      if (!Number.isNaN(value) && value > 0) {
+        Config.mapSampleDepth = value;
+        resetSimulation();
+      }
+    });
+  }
+
   if (mapFoodColorInput) {
     mapFoodColorInput.value = Config.mapFoodColor || "#00ff00";
     mapFoodColorInput.addEventListener("input", () => {
@@ -669,6 +1146,17 @@ export function setupUI(options) {
     });
   }
 
+  if (mapFoodUnitsPerCellInput) {
+    mapFoodUnitsPerCellInput.value = String(Config.mapFoodUnitsPerCell != null ? Config.mapFoodUnitsPerCell : 10);
+    mapFoodUnitsPerCellInput.addEventListener("input", () => {
+      const value = parseInt(mapFoodUnitsPerCellInput.value, 10);
+      if (!Number.isNaN(value) && value >= 0) {
+        Config.mapFoodUnitsPerCell = value;
+        resetSimulation();
+      }
+    });
+  }
+
   if (mapColorToleranceInput) {
     mapColorToleranceInput.value = String(Config.mapColorTolerance != null ? Config.mapColorTolerance : 60);
     if (mapColorToleranceValueLabel) mapColorToleranceValueLabel.textContent = mapColorToleranceInput.value;
@@ -681,6 +1169,69 @@ export function setupUI(options) {
       }
     });
   }
+
+  if (mapFoodColorToleranceInput) {
+    const base = Config.mapColorTolerance != null ? Config.mapColorTolerance : 60;
+    const val = Config.mapFoodColorTolerance != null ? Config.mapFoodColorTolerance : "";
+    mapFoodColorToleranceInput.value = val === "" ? "" : String(val);
+    mapFoodColorToleranceInput.placeholder = String(base);
+    mapFoodColorToleranceInput.addEventListener("input", () => {
+      const v = parseFloat(mapFoodColorToleranceInput.value);
+      if (Number.isNaN(v)) {
+        Config.mapFoodColorTolerance = null;
+      } else if (v >= 0) {
+        Config.mapFoodColorTolerance = v;
+      }
+    });
+  }
+
+  if (mapObstacleColorToleranceInput) {
+    const base = Config.mapColorTolerance != null ? Config.mapColorTolerance : 60;
+    const val = Config.mapObstacleColorTolerance != null ? Config.mapObstacleColorTolerance : "";
+    mapObstacleColorToleranceInput.value = val === "" ? "" : String(val);
+    mapObstacleColorToleranceInput.placeholder = String(base);
+    mapObstacleColorToleranceInput.addEventListener("input", () => {
+      const v = parseFloat(mapObstacleColorToleranceInput.value);
+      if (Number.isNaN(v)) {
+        Config.mapObstacleColorTolerance = null;
+      } else if (v >= 0) {
+        Config.mapObstacleColorTolerance = v;
+      }
+    });
+  }
+
+  if (mapNestColorToleranceInput) {
+    const base = Config.mapColorTolerance != null ? Config.mapColorTolerance : 60;
+    const val = Config.mapNestColorTolerance != null ? Config.mapNestColorTolerance : "";
+    mapNestColorToleranceInput.value = val === "" ? "" : String(val);
+    mapNestColorToleranceInput.placeholder = String(base);
+    mapNestColorToleranceInput.addEventListener("input", () => {
+      const v = parseFloat(mapNestColorToleranceInput.value);
+      if (Number.isNaN(v)) {
+        Config.mapNestColorTolerance = null;
+      } else if (v >= 0) {
+        Config.mapNestColorTolerance = v;
+      }
+    });
+  }
+
+  const bindMorphIterations = (input, key) => {
+    if (!input) return;
+    input.value = String(Config[key] != null ? Config[key] : 0);
+    input.addEventListener("input", () => {
+      const v = parseInt(input.value, 10);
+      if (!Number.isNaN(v) && v >= 0) {
+        Config[key] = v;
+      }
+    });
+  };
+
+  bindMorphIterations(mapObstacleDilateIterationsInput, "mapObstacleDilateIterations");
+  bindMorphIterations(mapObstacleErodeIterationsInput, "mapObstacleErodeIterations");
+  bindMorphIterations(mapFoodDilateIterationsInput, "mapFoodDilateIterations");
+  bindMorphIterations(mapFoodErodeIterationsInput, "mapFoodErodeIterations");
+  bindMorphIterations(mapNestDilateIterationsInput, "mapNestDilateIterations");
+  bindMorphIterations(mapNestErodeIterationsInput, "mapNestErodeIterations");
 
   if (mapPaletteMinDistanceInput) {
     const initial = Config.mapPaletteMinDistance != null ? Config.mapPaletteMinDistance : (Config.mapColorTolerance != null ? Config.mapColorTolerance : 60);
@@ -845,6 +1396,15 @@ export function setupUI(options) {
         if (mapFoodDepletedColorInput) mapFoodDepletedColorInput.value = hex;
       });
 
+      resetSimulation();
+    });
+  }
+
+  if (applyMorphologyButton) {
+    applyMorphologyButton.addEventListener("click", () => {
+      // Rebuild the simulation so the current morphology
+      // parameters are applied to the image map, obstacles,
+      // nest placement, and food.
       resetSimulation();
     });
   }
@@ -1199,6 +1759,58 @@ export function refreshUIFromConfig() {
     if (antSightValueLabel) antSightValueLabel.textContent = antSightInput.value;
   }
 
+  if (antPheromoneFrequencyInput) {
+    antPheromoneFrequencyInput.value = String(Config.antPheromoneFrequency);
+  }
+  if (obstacleAvoidanceRandomnessInput) {
+    obstacleAvoidanceRandomnessInput.value = String(Config.obstacleAvoidanceRandomness);
+  }
+  if (obstacleAvoidStrengthInput) {
+    obstacleAvoidStrengthInput.value = String(Config.obstacleAvoidStrength);
+  }
+  if (wanderSpeedFactorInput) {
+    wanderSpeedFactorInput.value = String(Config.wanderSpeedFactor);
+  }
+  if (trailSpeedFactorInput) {
+    trailSpeedFactorInput.value = String(Config.trailSpeedFactor);
+  }
+  if (headedToFoodSpeedFactorInput) {
+    headedToFoodSpeedFactorInput.value = String(Config.headedToFoodSpeedFactor);
+  }
+  if (headedHomeSpeedFactorInput) {
+    headedHomeSpeedFactorInput.value = String(Config.headedHomeSpeedFactor);
+  }
+  if (obstacleSideSpeedFactorInput) {
+    obstacleSideSpeedFactorInput.value = String(Config.obstacleSideSpeedFactor);
+  }
+  if (obstacleFrontSpeedFactorInput) {
+    obstacleFrontSpeedFactorInput.value = String(Config.obstacleFrontSpeedFactor);
+  }
+  if (collisionTurnMinDegreesInput) {
+    collisionTurnMinDegreesInput.value = String(Config.collisionTurnMinDegrees);
+  }
+  if (collisionTurnMaxDegreesInput) {
+    collisionTurnMaxDegreesInput.value = String(Config.collisionTurnMaxDegrees);
+  }
+  if (collisionPauseFramesInput) {
+    collisionPauseFramesInput.value = String(Config.collisionPauseFrames);
+  }
+  if (boundaryNudgeDistanceInput) {
+    boundaryNudgeDistanceInput.value = String(Config.boundaryNudgeDistance);
+  }
+  if (foodPickupPauseFramesInput) {
+    foodPickupPauseFramesInput.value = String(Config.foodPickupPauseFrames);
+  }
+  if (foodDropPauseFramesInput) {
+    foodDropPauseFramesInput.value = String(Config.foodDropPauseFrames);
+  }
+  if (postPauseEaseFramesInput) {
+    postPauseEaseFramesInput.value = String(Config.postPauseEaseFrames);
+  }
+  if (postPauseMinSpeedFactorInput) {
+    postPauseMinSpeedFactorInput.value = String(Config.postPauseMinSpeedFactor);
+  }
+
   // Simulation & world
   if (simulationSpeedInput) {
     simulationSpeedInput.value = String(Config.simulationSpeed);
@@ -1209,6 +1821,15 @@ export function refreshUIFromConfig() {
   }
   if (simHeightInput) {
     simHeightInput.value = String(Config.simulationHeight);
+  }
+  if (useCamBoundsInput) {
+    useCamBoundsInput.checked = !!Config.useCamBounds;
+  }
+  if (camLiniencyInput) {
+    camLiniencyInput.value = String(Config.camLiniency);
+  }
+  if (quadTreeCapacityInput) {
+    quadTreeCapacityInput.value = String(Config.quadTreeCapacity);
   }
   if (bgColorInput) {
     bgColorInput.value = Config.backgroundColor;
@@ -1225,6 +1846,14 @@ export function refreshUIFromConfig() {
     pheromoneLifeInput.value = String(Config.pheromoneLife);
     if (pheromoneLifeValueLabel) pheromoneLifeValueLabel.textContent = pheromoneLifeInput.value;
   }
+  if (redPheromoneLifeInput) {
+    const life = Config.redPheromoneLife != null ? Config.redPheromoneLife : "";
+    redPheromoneLifeInput.value = life === "" ? "" : String(life);
+  }
+  if (bluePheromoneLifeInput) {
+    const life = Config.bluePheromoneLife != null ? Config.bluePheromoneLife : "";
+    bluePheromoneLifeInput.value = life === "" ? "" : String(life);
+  }
   if (pheromoneLowScoreThresholdInput) {
     pheromoneLowScoreThresholdInput.value = String(Config.pheromoneLowScoreThreshold);
     if (pheromoneLowScoreThresholdValueLabel) pheromoneLowScoreThresholdValueLabel.textContent = pheromoneLowScoreThresholdInput.value;
@@ -1240,12 +1869,47 @@ export function refreshUIFromConfig() {
     pheromoneDiffusionStrengthInput.value = String(Config.pheromoneDiffusionStrength);
     if (pheromoneDiffusionStrengthValueLabel) pheromoneDiffusionStrengthValueLabel.textContent = pheromoneDiffusionStrengthInput.value;
   }
+  if (pheromoneMaxRadiusInput) {
+    const val = Config.pheromoneMaxRadius != null ? Config.pheromoneMaxRadius : "";
+    pheromoneMaxRadiusInput.value = val === "" ? "" : String(val);
+  }
+  if (pheromoneMaxIntensityInput) {
+    const val = Config.pheromoneMaxIntensity != null ? Config.pheromoneMaxIntensity : 1.0;
+    pheromoneMaxIntensityInput.value = String(val);
+  }
+  if (redPheromoneDiffusionEnabledInput) {
+    const effective = Config.redPheromoneDiffusionEnabled != null
+      ? Config.redPheromoneDiffusionEnabled
+      : Config.pheromoneDiffusionEnabled;
+    redPheromoneDiffusionEnabledInput.checked = !!effective;
+  }
+  if (redPheromoneDiffusionStrengthInput) {
+    const strength = Config.redPheromoneDiffusionStrength != null
+      ? Config.redPheromoneDiffusionStrength
+      : Config.pheromoneDiffusionStrength;
+    redPheromoneDiffusionStrengthInput.value = String(strength);
+  }
+  if (bluePheromoneDiffusionEnabledInput) {
+    const effective = Config.bluePheromoneDiffusionEnabled != null
+      ? Config.bluePheromoneDiffusionEnabled
+      : Config.pheromoneDiffusionEnabled;
+    bluePheromoneDiffusionEnabledInput.checked = !!effective;
+  }
+  if (bluePheromoneDiffusionStrengthInput) {
+    const strength = Config.bluePheromoneDiffusionStrength != null
+      ? Config.bluePheromoneDiffusionStrength
+      : Config.pheromoneDiffusionStrength;
+    bluePheromoneDiffusionStrengthInput.value = String(strength);
+  }
   if (searchersFollowHomePheromonesInput) {
     searchersFollowHomePheromonesInput.checked = !!Config.searchersFollowHomePheromones;
   }
   if (searcherHomePheromoneWeightInput) {
     searcherHomePheromoneWeightInput.value = String(Config.searcherHomePheromoneWeight);
     if (searcherHomePheromoneWeightValueLabel) searcherHomePheromoneWeightValueLabel.textContent = searcherHomePheromoneWeightInput.value;
+  }
+  if (skipPheromoneOnCollisionPauseInput) {
+    skipPheromoneOnCollisionPauseInput.checked = !!Config.skipPheromoneOnCollisionPause;
   }
 
   // Food & obstacles
@@ -1260,6 +1924,19 @@ export function refreshUIFromConfig() {
   if (pheromoneClusterCellSizeInput) {
     pheromoneClusterCellSizeInput.value = String(Config.pheromoneClusterCellSize);
     if (pheromoneClusterCellSizeValueLabel) pheromoneClusterCellSizeValueLabel.textContent = pheromoneClusterCellSizeInput.value;
+  }
+  if (foodClusterColorInput) {
+    foodClusterColorInput.value = Config.foodClusterColor || "#00ff00";
+  }
+  if (foodClusterTextColorInput) {
+    foodClusterTextColorInput.value = Config.foodClusterTextColor || "#000000";
+  }
+  if (obstacleLineWidthInput) {
+    obstacleLineWidthInput.value = String(Config.obstacleLineWidth != null ? Config.obstacleLineWidth : 3);
+  }
+  if (obstacleQueryMethodSelect) {
+    const method = Config.obstacleQueryMethod != null ? Config.obstacleQueryMethod : 0;
+    obstacleQueryMethodSelect.value = String(method);
   }
   if (showPheromonesInput) {
     showPheromonesInput.checked = !!Config.showPheromones;
@@ -1322,6 +1999,9 @@ export function refreshUIFromConfig() {
   if (mapSampleStepInput) {
     mapSampleStepInput.value = String(Config.mapSampleStep || 4);
   }
+  if (mapSampleDepthInput) {
+    mapSampleDepthInput.value = String(Config.mapSampleDepth != null ? Config.mapSampleDepth : 3);
+  }
   if (mapFoodColorInput) {
     mapFoodColorInput.value = Config.mapFoodColor || "#00ff00";
   }
@@ -1334,14 +2014,47 @@ export function refreshUIFromConfig() {
   if (mapFoodDepletedColorInput) {
     mapFoodDepletedColorInput.value = Config.mapFoodDepletedColor || "#000000";
   }
+  if (mapFoodUnitsPerCellInput) {
+    mapFoodUnitsPerCellInput.value = String(Config.mapFoodUnitsPerCell != null ? Config.mapFoodUnitsPerCell : 10);
+  }
   if (mapColorToleranceInput) {
     mapColorToleranceInput.value = String(Config.mapColorTolerance != null ? Config.mapColorTolerance : 60);
     if (mapColorToleranceValueLabel) mapColorToleranceValueLabel.textContent = mapColorToleranceInput.value;
+  }
+  if (mapFoodColorToleranceInput) {
+    const val = Config.mapFoodColorTolerance != null ? Config.mapFoodColorTolerance : "";
+    mapFoodColorToleranceInput.value = val === "" ? "" : String(val);
+  }
+  if (mapObstacleColorToleranceInput) {
+    const val = Config.mapObstacleColorTolerance != null ? Config.mapObstacleColorTolerance : "";
+    mapObstacleColorToleranceInput.value = val === "" ? "" : String(val);
+  }
+  if (mapNestColorToleranceInput) {
+    const val = Config.mapNestColorTolerance != null ? Config.mapNestColorTolerance : "";
+    mapNestColorToleranceInput.value = val === "" ? "" : String(val);
   }
   if (mapPaletteMinDistanceInput) {
     const initial = Config.mapPaletteMinDistance != null ? Config.mapPaletteMinDistance : (Config.mapColorTolerance != null ? Config.mapColorTolerance : 60);
     mapPaletteMinDistanceInput.value = String(initial);
     if (mapPaletteMinDistanceValueLabel) mapPaletteMinDistanceValueLabel.textContent = mapPaletteMinDistanceInput.value;
+  }
+  if (mapObstacleDilateIterationsInput) {
+    mapObstacleDilateIterationsInput.value = String(Config.mapObstacleDilateIterations != null ? Config.mapObstacleDilateIterations : 0);
+  }
+  if (mapObstacleErodeIterationsInput) {
+    mapObstacleErodeIterationsInput.value = String(Config.mapObstacleErodeIterations != null ? Config.mapObstacleErodeIterations : 0);
+  }
+  if (mapFoodDilateIterationsInput) {
+    mapFoodDilateIterationsInput.value = String(Config.mapFoodDilateIterations != null ? Config.mapFoodDilateIterations : 0);
+  }
+  if (mapFoodErodeIterationsInput) {
+    mapFoodErodeIterationsInput.value = String(Config.mapFoodErodeIterations != null ? Config.mapFoodErodeIterations : 0);
+  }
+  if (mapNestDilateIterationsInput) {
+    mapNestDilateIterationsInput.value = String(Config.mapNestDilateIterations != null ? Config.mapNestDilateIterations : 0);
+  }
+  if (mapNestErodeIterationsInput) {
+    mapNestErodeIterationsInput.value = String(Config.mapNestErodeIterations != null ? Config.mapNestErodeIterations : 0);
   }
   if (colorDistanceMethodSelect) {
     const method = Config.colorDistanceMethod != null ? Config.colorDistanceMethod : 0;
@@ -1353,6 +2066,14 @@ export function refreshUIFromConfig() {
   }
   if (mapShowNestMarkerInput) {
     mapShowNestMarkerInput.checked = !!Config.mapShowNestMarker;
+  }
+  if (mapNestUseCellSizeInput) {
+    mapNestUseCellSizeInput.checked = !!Config.mapNestUseCellSize;
+  }
+  if (mapNestCellSizeScaleInput) {
+    mapNestCellSizeScaleInput.value = String(
+      Config.mapNestCellSizeScale != null ? Config.mapNestCellSizeScale : 0.9
+    );
   }
   if (mapFoodRenderCellsOnlyInput) {
     mapFoodRenderCellsOnlyInput.checked = !!Config.mapFoodRenderCellsOnly;

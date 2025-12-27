@@ -26,6 +26,7 @@ export class Ant {
         this.lastObstacleHitSeverity = 0; // 0 = none, 1 = side, 2 = front/strong
         this.postPauseFramesRemaining = 0;
         this.wasPausedLastFrame = false;
+        this.suppressPheromoneDropThisFrame = false;
     }
     draw(p) {
         const h = Config.antSize || 15;
@@ -132,7 +133,7 @@ export class Ant {
             effectiveSpeed *= Config.headedHomeSpeedFactor;
         }
 
-        // Further slow down when recently avoiding obstacles.
+        // Further slow down based on recent actual collisions.
         if (this.lastObstacleHitSeverity === 1) {
             effectiveSpeed *= Config.obstacleSideSpeedFactor;
         } else if (this.lastObstacleHitSeverity === 2) {
@@ -150,7 +151,114 @@ export class Ant {
             this.postPauseFramesRemaining--;
         }
 
-        this.pos.add(this.velocity.scalarMultiply(effectiveSpeed), true);
+        // Proposed movement in this frame.
+        const step = this.velocity.scalarMultiply(effectiveSpeed);
+        let nextPos = this.pos.add(step);
+
+        // Hard collision test against obstacles along the movement segment,
+        // so ants cannot tunnel through thin walls when moving fast.
+        let collidedWithObstacle = false;
+        if (Global.obstacles && Global.obstacles.length > 0) {
+            const obstacles = getObstaclesNearLine(this.pos.x, this.pos.y, nextPos.x, nextPos.y);
+            for (const o of obstacles) {
+                if (lineCollision(this.pos.x, this.pos.y, nextPos.x, nextPos.y, o.x1, o.y1, o.x2, o.y2)) {
+                    collidedWithObstacle = true;
+                    break;
+                }
+            }
+        }
+
+        // Strict simulation bounds: ants are clamped to the world rectangle
+        // and "bounce" by turning around if they hit an edge.
+        const worldWidth = Config.simulationWidth;
+        const worldHeight = Config.simulationHeight;
+        let hitBoundary = false;
+        let hitLeft = false, hitRight = false, hitTop = false, hitBottom = false;
+        if (worldWidth != null && worldHeight != null) {
+            if (nextPos.x < 0) {
+                nextPos.x = 0;
+                hitBoundary = true;
+                hitLeft = true;
+            } else if (nextPos.x > worldWidth) {
+                nextPos.x = worldWidth;
+                hitBoundary = true;
+                hitRight = true;
+            }
+            if (nextPos.y < 0) {
+                nextPos.y = 0;
+                hitBoundary = true;
+                hitTop = true;
+            } else if (nextPos.y > worldHeight) {
+                nextPos.y = worldHeight;
+                hitBoundary = true;
+                hitBottom = true;
+            }
+        }
+
+        if (collidedWithObstacle || hitBoundary) {
+            // Treat as a strong obstacle hit: turn the ant around to avoid
+            // repeated penetration. Speed slow-down is applied on the
+            // following frames based on this collision state.
+
+            // For interior obstacle collisions, do not advance into the wall.
+            if (collidedWithObstacle && !hitBoundary) {
+                nextPos = this.pos;
+            }
+            if (hitBoundary) {
+                // Reflect velocity away from the touched edges.
+                if (hitLeft) {
+                    this.velocity.x = Math.abs(this.velocity.x) || this.speed;
+                } else if (hitRight) {
+                    this.velocity.x = -Math.abs(this.velocity.x) || -this.speed;
+                }
+                if (hitTop) {
+                    this.velocity.y = Math.abs(this.velocity.y) || this.speed;
+                } else if (hitBottom) {
+                    this.velocity.y = -Math.abs(this.velocity.y) || -this.speed;
+                }
+
+                // Small jitter so they don't run perfectly parallel to the wall.
+                const jitterDeg = 10;
+                const jitterRad = (Math.PI / 180) * jitterDeg;
+                const jitter = (Math.random() * 2 - 1) * jitterRad;
+                this.velocity.rotate(jitter, true);
+                this.desiredVel = clone(this.velocity);
+
+                // Nudge slightly back inside the world so they don't get stuck on the exact edge.
+                const nudgeDist = Config.boundaryNudgeDistance != null ? Config.boundaryNudgeDistance : 2;
+                const dir = this.velocity.normalize();
+                nextPos = nextPos.add(dir.scalarMultiply(nudgeDist));
+
+                // Re-clamp just in case the nudge overshoots.
+                if (worldWidth != null && worldHeight != null) {
+                    if (nextPos.x < 0) nextPos.x = 0;
+                    else if (nextPos.x > worldWidth) nextPos.x = worldWidth;
+                    if (nextPos.y < 0) nextPos.y = 0;
+                    else if (nextPos.y > worldHeight) nextPos.y = worldHeight;
+                }
+            } else if (collidedWithObstacle) {
+                // Turn away from interior obstacles using configurable turn range.
+                const minDeg = Config.collisionTurnMinDegrees != null ? Config.collisionTurnMinDegrees : 120;
+                const maxDeg = Config.collisionTurnMaxDegrees != null ? Config.collisionTurnMaxDegrees : 180;
+                const minRad = (minDeg * Math.PI) / 180;
+                const maxRad = (maxDeg * Math.PI) / 180;
+                const angle = minRad + Math.random() * (maxRad - minRad);
+                const sign = Math.random() < 0.5 ? -1 : 1;
+                this.velocity.rotate(sign * angle, true);
+                this.desiredVel = clone(this.velocity);
+            }
+
+            const collisionPause = Config.collisionPauseFrames != null ? Config.collisionPauseFrames : 0;
+            if (collisionPause > 0) {
+                this.pauseFrames = Math.max(this.pauseFrames, collisionPause);
+            }
+
+                        if (Config.skipPheromoneOnCollisionPause) {
+                            this.suppressPheromoneDropThisFrame = true;
+                        }
+        }
+
+        this.pos.assign(nextPos);
         const insideNestRadiusSq = this.nest.radius * this.nest.radius;
         if (distSquared(this.pos.x, this.pos.y, this.nest.pos.x, this.nest.pos.y) < insideNestRadiusSq) {
             if (this.hasFood) {
@@ -161,16 +269,24 @@ export class Ant {
             }
         }
         if (this.framesUntilPheromone === 0) {
-            if (this.hasFood) {
-                Global.redPheromones.insert(new Pheromone(this.pos.x, this.pos.y, PheromoneType.RED));
-            } else {
-                Global.bluePheromones.insert(new Pheromone(this.pos.x, this.pos.y, PheromoneType.BLUE));
+            if (!this.suppressPheromoneDropThisFrame) {
+                if (this.hasFood) {
+                    Global.redPheromones.insert(new Pheromone(this.pos.x, this.pos.y, PheromoneType.RED));
+                } else {
+                    Global.bluePheromones.insert(new Pheromone(this.pos.x, this.pos.y, PheromoneType.BLUE));
+                }
+                this.framesUntilPheromone = Config.antPheromoneFrequency;
             }
-            this.framesUntilPheromone = Config.antPheromoneFrequency;
+            // Clear suppression after we've respected it for one frame.
+            this.suppressPheromoneDropThisFrame = false;
         }
         else {
             this.framesUntilPheromone--;
         }
+
+        // Update collision severity based solely on actual collisions or
+        // boundary hits from this frame, not on sensor-based avoidance.
+        this.lastObstacleHitSeverity = (collidedWithObstacle || hitBoundary) ? 2 : 0;
     }
     applySteer() {
         const subtracted = this.desiredVel.subtract(this.velocity);
@@ -226,7 +342,7 @@ export class Ant {
         const sensorRadiusSq = sensorRadius * sensorRadius;
         const scores = [0, 0, 0];
         const pheromoneRange = new Rectangle(this.pos.x, this.pos.y, this.sight, this.sight);
-        const accumulateFromTree = (tree, scoreFn, weight = 1.0) => {
+        const accumulateFromTree = (tree, scoreFn, weight = 1.0, useDiffusion, diffusionStrength) => {
             for (let i of tree.query(pheromoneRange)) {
                 const pheromone = i.value;
                 const base = pheromone.life / pheromone.lifeAmount;
@@ -239,10 +355,10 @@ export class Ant {
                     if (dSq >= sensorRadiusSq) continue;
 
                     let value = baseValue;
-                    if (Config.pheromoneDiffusionEnabled) {
+                    if (useDiffusion) {
                         // Age-dependent diffusion kernel: older pheromones diffuse further but more weakly.
                         const ageFactor = 1 - base; // 0 = fresh, 1 = old
-                        const strength = Config.pheromoneDiffusionStrength != null ? Config.pheromoneDiffusionStrength : 1.0;
+                        const strength = diffusionStrength != null ? diffusionStrength : 1.0;
                         const sigmaBase = sensorRadius * 0.4;
                         const sigma = sigmaBase * (1 + ageFactor * strength); // stronger diffusion => larger sigma
                         const twoSigmaSq = 2 * sigma * sigma;
@@ -259,15 +375,25 @@ export class Ant {
         // Determine which pheromone type to consider based on whether the ant has food.
         // Home pherhormones (blue) are dropped by ants searching for food, and followed by ants carrying food in order to return home.
         // Food pheromones (red) are dropped by ants carrying food, and followed by ants searching for food in order to find food sources.
+        const redUseDiff = Config.redPheromoneDiffusionEnabled != null ? Config.redPheromoneDiffusionEnabled : Config.pheromoneDiffusionEnabled;
+        let redStrength = Config.redPheromoneDiffusionStrength != null ? Config.redPheromoneDiffusionStrength : Config.pheromoneDiffusionStrength;
+        if (redStrength == null)
+            redStrength = 1.0;
+
+        const blueUseDiff = Config.bluePheromoneDiffusionEnabled != null ? Config.bluePheromoneDiffusionEnabled : Config.pheromoneDiffusionEnabled;
+        let blueStrength = Config.bluePheromoneDiffusionStrength != null ? Config.bluePheromoneDiffusionStrength : Config.pheromoneDiffusionStrength;
+        if (blueStrength == null)
+            blueStrength = 1.0;
+
         if (this.hasFood) {
             // Ants carrying food follow home (blue) pheromones in the forward direction.
             if (Config.useBluePheromones) {
-                accumulateFromTree(Global.bluePheromones, (base) => base, 1.0);
+                accumulateFromTree(Global.bluePheromones, (base) => base, 1.0, blueUseDiff, blueStrength);
             }
         } else {
             // Searchers always consider food (red) pheromones if enabled.
             if (Config.useRedPheromones) {
-                accumulateFromTree(Global.redPheromones, (base) => base, 1.0);
+                accumulateFromTree(Global.redPheromones, (base) => base, 1.0, redUseDiff, redStrength);
             }
             // Optionally let searchers also follow home (blue) pheromones using an inverted score,
             // so they tend to move toward older parts of the trail (away from the nest).
@@ -275,7 +401,9 @@ export class Ant {
                 accumulateFromTree(
                     Global.bluePheromones,
                     (base) => 1 - base,
-                    Config.searcherHomePheromoneWeight
+                    Config.searcherHomePheromoneWeight,
+                    blueUseDiff,
+                    blueStrength
                 );
             }
         }
@@ -361,15 +489,6 @@ export class Ant {
         const hitLeft = sensorHits[0];
         const hitCenter = sensorHits[1];
         const hitRight = sensorHits[2];
-
-        // Track severity for speed modulation in move().
-        if (!hitLeft && !hitCenter && !hitRight) {
-            this.lastObstacleHitSeverity = 0;
-        } else if (hitCenter || (hitLeft && hitRight)) {
-            this.lastObstacleHitSeverity = 2;
-        } else {
-            this.lastObstacleHitSeverity = 1;
-        }
 
         // Determine preferred turn direction: +1 = right, -1 = left, 0 = no bias.
         let preferredSign = 0;
