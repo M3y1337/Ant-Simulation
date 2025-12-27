@@ -80,6 +80,15 @@
                     </div>
 
                     <div class="control prestart-only control-inline">
+                        <label for="antHeadingQuantizationDirections">Heading quantization</label>
+                        <select id="antHeadingQuantizationDirections">
+                            <option value="0">Off (continuous)</option>
+                            <option value="4">4 directions</option>
+                            <option value="8">8 directions</option>
+                        </select>
+                    </div>
+
+                    <div class="control prestart-only control-inline">
                         <label for="obstacleAvoidanceRandomness">Obstacle avoidance randomness</label>
                         <input id="obstacleAvoidanceRandomness" type="number" min="0" max="2" step="0.05">
                     </div>
@@ -195,6 +204,10 @@
 
                     <div class="control prestart-only">
                         <label><input id="pauseWhenNoFood" type="checkbox"> Pause when all food is collected</label>
+                    </div>
+
+                    <div class="control prestart-only">
+                        <label><input id="pixelMode" type="checkbox"> Pixel mode (grid-based world)</label>
                     </div>
 
                     <div class="control prestart-only">
@@ -399,6 +412,10 @@
                         </select>
                     </div>
 
+                    <div class="control prestart-only">
+                        <label><input id="pixelUseCellObstacles" type="checkbox"> Use cell obstacles in pixel mode (image map)</label>
+                    </div>
+
                     <div class="control prestart-only control-inline">
                         <label for="nestColor">Nest color</label>
                         <input id="nestColor" type="color">
@@ -407,6 +424,10 @@
                     <div class="control prestart-only control-inline">
                         <label for="nestTextColor">Nest text color</label>
                         <input id="nestTextColor" type="color">
+                    </div>
+
+                    <div class="control">
+                        <label><input id="showNestFoodCount" type="checkbox"> Show food count at nest</label>
                     </div>
                 </div>
             </div>
@@ -446,6 +467,10 @@
 
                     <div class="control">
                         <label><input id="mapNestUseCellSize" type="checkbox"> Use cell-sized nest marker</label>
+                    </div>
+
+                    <div class="control prestart-only">
+                        <label><input id="pixelNestAsCell" type="checkbox"> Pixel-style nest in pixel mode</label>
                     </div>
 
                     <div class="control control-inline">

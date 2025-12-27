@@ -5,7 +5,7 @@ import { Rectangle } from "./quadtree.js";
 import { Vector, fromAngle, clone } from "./vector.js";
 import { lineCollision, distSquared } from "./helper.js";
 import { Config } from "./config.js";
-import { onMapFoodConsumed } from "./imagemap.js";
+import { onMapFoodConsumed, ImageMap, isLineBlockedByObstacleCells } from "./imagemap.js";
 export class Ant {
     constructor(x, y, direction, nest) {
         this.hasFood = false;
@@ -155,10 +155,17 @@ export class Ant {
         const step = this.velocity.scalarMultiply(effectiveSpeed);
         let nextPos = this.pos.add(step);
 
-        // Hard collision test against obstacles along the movement segment,
-        // so ants cannot tunnel through thin walls when moving fast.
+        // Hard collision test along the movement segment. In normal
+        // mode use line segments; in pixel-mode image-map cell
+        // obstacle mode, test against obstacle cells instead.
         let collidedWithObstacle = false;
-        if (Global.obstacles && Global.obstacles.length > 0) {
+        const useCellObstacles = Config.pixelMode && Config.useImageMap && Config.pixelUseCellObstacles;
+        if (useCellObstacles) {
+            if (isLineBlockedByObstacleCells(this.pos.x, this.pos.y, nextPos.x, nextPos.y)) {
+                collidedWithObstacle = true;
+            }
+        }
+        else if (Global.obstacles && Global.obstacles.length > 0) {
             const obstacles = getObstaclesNearLine(this.pos.x, this.pos.y, nextPos.x, nextPos.y);
             for (const o of obstacles) {
                 if (lineCollision(this.pos.x, this.pos.y, nextPos.x, nextPos.y, o.x1, o.y1, o.x2, o.y2)) {
@@ -259,6 +266,22 @@ export class Ant {
         }
 
         this.pos.assign(nextPos);
+        // In pixel mode, snap positions to the centres of image-map cells
+        // to keep movement visually aligned to the underlying grid.
+        if (Config.pixelMode && ImageMap && ImageMap.cols && ImageMap.rows) {
+            const cellW = ImageMap.cellWidth;
+            const cellH = ImageMap.cellHeight;
+            if (cellW > 0 && cellH > 0) {
+                let col = Math.round(this.pos.x / cellW - 0.5);
+                let row = Math.round(this.pos.y / cellH - 0.5);
+                if (col < 0) col = 0;
+                else if (col >= ImageMap.cols) col = ImageMap.cols - 1;
+                if (row < 0) row = 0;
+                else if (row >= ImageMap.rows) row = ImageMap.rows - 1;
+                this.pos.x = (col + 0.5) * cellW;
+                this.pos.y = (row + 0.5) * cellH;
+            }
+        }
         const insideNestRadiusSq = this.nest.radius * this.nest.radius;
         if (distSquared(this.pos.x, this.pos.y, this.nest.pos.x, this.nest.pos.y) < insideNestRadiusSq) {
             if (this.hasFood) {
@@ -294,6 +317,18 @@ export class Ant {
         const acc = desiredSteer.limit(this.steeringStrength);
         this.velocity.add(acc, true);
         this.velocity.limit(this.speed, true);
+
+        // Optional heading quantization: snap the velocity direction to
+        // 4- or 8-way headings while preserving its current magnitude.
+        const dirs = Config.antHeadingQuantizationDirections || 0;
+        if (dirs === 4 || dirs === 8) {
+            const angle = Math.atan2(this.velocity.y, this.velocity.x);
+            const step = (2 * Math.PI) / dirs;
+            const snapped = Math.round(angle / step) * step;
+            const mag = this.velocity.magnitude();
+            const snappedVec = fromAngle(snapped, 1).scalarMultiply(mag);
+            this.velocity.assign(snappedVec);
+        }
     }
     findFood() {
         let minDist = Infinity;
@@ -303,15 +338,23 @@ export class Ant {
         for (let i = 0; i < pool.length; i++) { 
             const distanceSq = distSquared(this.pos.x, this.pos.y, pool[i].value.pos.x, pool[i].value.pos.y);
             if (distanceSq < minDist) {
-                // Ants cannot find food that is behind obstacles
-                const obstacles = getObstaclesNearLine(this.pos.x, this.pos.y, pool[i].value.pos.x, pool[i].value.pos.y);
-                let collided = false;
-                for (let j of obstacles) { 
-                    if (lineCollision(this.pos.x, this.pos.y, pool[i].value.pos.x, pool[i].value.pos.y, j.x1, j.y1, j.x2, j.y2)) {
-                        collided = true;
+                // Ants cannot find food that is behind obstacles or
+                // obstacle cells (in pixel-mode cell obstacle mode).
+                const useCellObstacles = Config.pixelMode && Config.useImageMap && Config.pixelUseCellObstacles;
+                let blocked = false;
+                if (useCellObstacles) {
+                    blocked = isLineBlockedByObstacleCells(this.pos.x, this.pos.y, pool[i].value.pos.x, pool[i].value.pos.y);
+                }
+                else {
+                    const obstacles = getObstaclesNearLine(this.pos.x, this.pos.y, pool[i].value.pos.x, pool[i].value.pos.y);
+                    for (let j of obstacles) {
+                        if (lineCollision(this.pos.x, this.pos.y, pool[i].value.pos.x, pool[i].value.pos.y, j.x1, j.y1, j.x2, j.y2)) {
+                            blocked = true;
+                            break;
+                        }
                     }
                 }
-                if (collided) {
+                if (blocked) {
                     continue;
                 }
                 minDist = distanceSq;
@@ -471,6 +514,10 @@ export class Ant {
                 x2: sensorPos.x,
                 y2: sensorPos.y,
             };
+            const useCellObstacles = Config.pixelMode && Config.useImageMap && Config.pixelUseCellObstacles;
+            if (useCellObstacles) {
+                return isLineBlockedByObstacleCells(line.x1, line.y1, line.x2, line.y2);
+            }
             const obstacles = getObstaclesNearLine(line.x1, line.y1, line.x2, line.y2);
             for (let o of obstacles) {
                 if (lineCollision(line.x1, line.y1, line.x2, line.y2, o.x1, o.y1, o.x2, o.y2)) {

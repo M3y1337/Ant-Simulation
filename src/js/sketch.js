@@ -4,7 +4,7 @@ import { QuadTree, Rectangle } from "./quadtree.js";
 import { Vector } from "./vector.js";
 import { Config } from "./config.js";
 import { setupUI, syncPauseUI, syncDebugUI, updateFPSUI, setUIPanelVisible, syncHUDUI, updatePalettePreview, updateStatusMessage } from "./ui.js";
-import { renderClusteredPheromones, renderClusteredFood } from "./rendering.js";
+import { renderClusteredPheromones, renderClusteredFood, renderPixelPheromones, renderPixelFood, renderPixelObstacles } from "./rendering.js";
 import { rebuildObstacleGrid, drawObstacles } from "./obstacle.js";
 import { Camera } from "./Camera.js";
 import { Food } from "./food.js";
@@ -35,6 +35,10 @@ let simStepAccumulator = 0;
 let mapImage = null;
 let autoPausedForNoFood = false;
 let imageMapLayer = null;
+// Tracks whether the cached imageMapLayer was built with
+// mapShowAllCells enabled or not, so we can rebuild when
+// the config changes at runtime.
+let imageMapLayerShowAllCells = null;
 
 function isEventOnUI(event) {
     if (!event)
@@ -54,9 +58,11 @@ let currentP = null;
 function rebuildImageMapLayer(p, worldWidth, worldHeight) {
     if (!(Config.useImageMap && ImageMap.cells && ImageMap.cells.length > 0)) {
         imageMapLayer = null;
+        imageMapLayerShowAllCells = null;
         return;
     }
     imageMapLayer = p.createGraphics(worldWidth, worldHeight);
+    imageMapLayerShowAllCells = !!Config.mapShowAllCells;
     if (imageMapLayer.pixelDensity) {
         imageMapLayer.pixelDensity(1);
     }
@@ -92,6 +98,15 @@ function drawImageMapLayer(p) {
         return;
     if (!ImageMap.cells || ImageMap.cells.length === 0)
         return;
+    // If the cached layer was built with a different
+    // mapShowAllCells setting, rebuild it to match the
+    // current configuration so that we either show all
+    // cells or only the functional ones, as requested.
+    if (imageMapLayer && imageMapLayerShowAllCells !== !!Config.mapShowAllCells) {
+        const worldWidth = Config.simulationWidth || p.width;
+        const worldHeight = Config.simulationHeight || p.height;
+        rebuildImageMapLayer(p, worldWidth, worldHeight);
+    }
     if (!imageMapLayer) {
         // Fallback: draw directly if layer has not been built yet.
         p.push();
@@ -112,6 +127,68 @@ function drawImageMapLayer(p) {
     p.imageMode(p.CORNER);
     p.image(imageMapLayer, 0, 0);
     p.pop();
+}
+function drawPixelWorld(p) {
+    // Image-map background layer (drawn in world space beneath everything).
+    drawImageMapLayer(p);
+    if (p.noSmooth) {
+        // Prefer crisp scaling/blitting when available.
+        p.noSmooth();
+    }
+    // Pheromones rendered as pixel-aligned cells.
+    if (Config.showPheromones && ImageMap.cells && ImageMap.cells.length > 0) {
+        renderPixelPheromones(p, visibleRedPheromones, visibleBluePheromones, ImageMap.cellWidth, ImageMap.cellHeight, ImageMap.cols, ImageMap.rows);
+    }
+    // Food rendered directly from image-map cell state for a crisp, grid-based look
+    if (Config.useImageMap && !Config.mapFoodRenderCellsOnly && ImageMap.cells && ImageMap.cells.length > 0) {
+        renderPixelFood(p, ImageMap, Config.foodColor);
+    }
+    // Obstacles: in pixel + cell-obstacle mode, draw obstacle cells as solid
+    // blocks; otherwise fall back to line segment rendering.
+    if (Config.showObstacles) {
+        if (Config.useImageMap && Config.pixelUseCellObstacles && ImageMap.cells && ImageMap.cells.length > 0) {
+            renderPixelObstacles(p, ImageMap, Config.obstacleColor);
+            // Still draw border segments from Global.obstacles so world bounds remain visible.
+            drawObstacles(p);
+        }
+        else {
+            drawObstacles(p);
+        }
+    }
+    // Ants
+    for (let ant of nest.ants) {
+        ant.draw(p);
+    }
+    // Nest
+    if (!Config.useImageMap || Config.mapShowNestMarker) {
+        nest.draw(p);
+    }
+    // Debug overlays (same as regular world rendering)
+    if (Debug.quadTree) {
+        drawQuadTreeBounds(p, Global.food, "rgba(0, 255, 0, 128)");
+        drawQuadTreeBounds(p, Global.redPheromones, "rgba(253, 33, 8, 128)");
+        drawQuadTreeBounds(p, Global.bluePheromones, "rgba(66, 135, 245, 128)");
+    }
+    if (Debug.sensors) {
+        for (let ant of nest.ants) {
+            if (ant.debugDrawSensors)
+                ant.debugDrawSensors(p);
+        }
+    }
+    if (Debug.antState) {
+        for (let ant of nest.ants) {
+            if (ant.debugDrawState)
+                ant.debugDrawState(p);
+        }
+    }
+}
+function drawCurrentWorld(p) {
+    if (Config.pixelMode) {
+        drawPixelWorld(p);
+    }
+    else {
+        drawWorld(p);
+    }
 }
 function initSimulation(p) {
     if (Config.useImageMap && Config.mapUseImageSize && mapImage) {
@@ -156,7 +233,8 @@ function initSimulation(p) {
     }
 
     // If an image map is configured and loaded, build a discrete map of cells
-    // and add image-derived obstacles before rebuilding the obstacle grid.
+    // and, unless pixel cell obstacles are enabled, add image-derived
+    // obstacle line segments before rebuilding the obstacle grid.
     if (Config.useImageMap && mapImage) {
         buildImageMap(p, mapImage, worldWidth, worldHeight);
         rebuildImageMapLayer(p, worldWidth, worldHeight);
@@ -167,120 +245,126 @@ function initSimulation(p) {
             const cellW = ImageMap.cellWidth;
             const cellH = ImageMap.cellHeight;
 
-            const getKind = (col, row) => {
-                if (col < 0 || col >= cols || row < 0 || row >= rows)
-                    return "empty";
-                const idx = row * cols + col;
-                const c = ImageMap.cells[idx];
-                return c ? c.kind : "empty";
-            };
+            // When pixel cell obstacles are enabled, we do not generate
+            // interior obstacle line segments; the cells themselves act
+            // as blockers. Otherwise, build merged obstacle edges as
+            // before.
+            if (!(Config.pixelMode && Config.pixelUseCellObstacles)) {
+                const getKind = (col, row) => {
+                    if (col < 0 || col >= cols || row < 0 || row >= rows)
+                        return "empty";
+                    const idx = row * cols + col;
+                    const c = ImageMap.cells[idx];
+                    return c ? c.kind : "empty";
+                };
 
-            // Horizontal edges (top and bottom), merged across columns
-            for (let row = 0; row < rows; row++) {
-                // Top edges for this row
-                let runStartCol = null;
-                for (let col = 0; col <= cols; col++) {
-                    const isEdgeCell = col < cols && getKind(col, row) === "obstacle" && getKind(col, row - 1) !== "obstacle";
-                    if (isEdgeCell && runStartCol === null) {
-                        runStartCol = col;
+                // Horizontal edges (top and bottom), merged across columns
+                for (let row = 0; row < rows; row++) {
+                    // Top edges for this row
+                    let runStartCol = null;
+                    for (let col = 0; col <= cols; col++) {
+                        const isEdgeCell = col < cols && getKind(col, row) === "obstacle" && getKind(col, row - 1) !== "obstacle";
+                        if (isEdgeCell && runStartCol === null) {
+                            runStartCol = col;
+                        }
+                        else if ((!isEdgeCell || col === cols) && runStartCol !== null) {
+                            const startCol = runStartCol;
+                            const endCol = col - 1;
+                            const x1 = startCol * cellW;
+                            const x2 = (endCol + 1) * cellW;
+                            const y = row * cellH;
+                            const obstacle = {
+                                x1,
+                                y1: y,
+                                x2,
+                                y2: y,
+                                pos: { x: (x1 + x2) / 2, y },
+                            };
+                            Global.obstacles.push(obstacle);
+                            Global.obstacleTree.insert(obstacle);
+                            runStartCol = null;
+                        }
                     }
-                    else if ((!isEdgeCell || col === cols) && runStartCol !== null) {
-                        const startCol = runStartCol;
-                        const endCol = col - 1;
-                        const x1 = startCol * cellW;
-                        const x2 = (endCol + 1) * cellW;
-                        const y = row * cellH;
-                        const obstacle = {
-                            x1,
-                            y1: y,
-                            x2,
-                            y2: y,
-                            pos: { x: (x1 + x2) / 2, y },
-                        };
-                        Global.obstacles.push(obstacle);
-                        Global.obstacleTree.insert(obstacle);
-                        runStartCol = null;
+
+                    // Bottom edges for this row
+                    runStartCol = null;
+                    for (let col = 0; col <= cols; col++) {
+                        const isEdgeCell = col < cols && getKind(col, row) === "obstacle" && getKind(col, row + 1) !== "obstacle";
+                        if (isEdgeCell && runStartCol === null) {
+                            runStartCol = col;
+                        }
+                        else if ((!isEdgeCell || col === cols) && runStartCol !== null) {
+                            const startCol = runStartCol;
+                            const endCol = col - 1;
+                            const x1 = startCol * cellW;
+                            const x2 = (endCol + 1) * cellW;
+                            const y = (row + 1) * cellH;
+                            const obstacle = {
+                                x1,
+                                y1: y,
+                                x2,
+                                y2: y,
+                                pos: { x: (x1 + x2) / 2, y },
+                            };
+                            Global.obstacles.push(obstacle);
+                            Global.obstacleTree.insert(obstacle);
+                            runStartCol = null;
+                        }
                     }
                 }
 
-                // Bottom edges for this row
-                runStartCol = null;
-                for (let col = 0; col <= cols; col++) {
-                    const isEdgeCell = col < cols && getKind(col, row) === "obstacle" && getKind(col, row + 1) !== "obstacle";
-                    if (isEdgeCell && runStartCol === null) {
-                        runStartCol = col;
+                // Vertical edges (left and right), merged across rows
+                for (let col = 0; col < cols; col++) {
+                    // Left edges for this column
+                    let runStartRow = null;
+                    for (let row = 0; row <= rows; row++) {
+                        const isEdgeCell = row < rows && getKind(col, row) === "obstacle" && getKind(col - 1, row) !== "obstacle";
+                        if (isEdgeCell && runStartRow === null) {
+                            runStartRow = row;
+                        }
+                        else if ((!isEdgeCell || row === rows) && runStartRow !== null) {
+                            const startRow = runStartRow;
+                            const endRow = row - 1;
+                            const x = col * cellW;
+                            const y1 = startRow * cellH;
+                            const y2 = (endRow + 1) * cellH;
+                            const obstacle = {
+                                x1: x,
+                                y1,
+                                x2: x,
+                                y2,
+                                pos: { x, y: (y1 + y2) / 2 },
+                            };
+                            Global.obstacles.push(obstacle);
+                            Global.obstacleTree.insert(obstacle);
+                            runStartRow = null;
+                        }
                     }
-                    else if ((!isEdgeCell || col === cols) && runStartCol !== null) {
-                        const startCol = runStartCol;
-                        const endCol = col - 1;
-                        const x1 = startCol * cellW;
-                        const x2 = (endCol + 1) * cellW;
-                        const y = (row + 1) * cellH;
-                        const obstacle = {
-                            x1,
-                            y1: y,
-                            x2,
-                            y2: y,
-                            pos: { x: (x1 + x2) / 2, y },
-                        };
-                        Global.obstacles.push(obstacle);
-                        Global.obstacleTree.insert(obstacle);
-                        runStartCol = null;
-                    }
-                }
-            }
 
-            // Vertical edges (left and right), merged across rows
-            for (let col = 0; col < cols; col++) {
-                // Left edges for this column
-                let runStartRow = null;
-                for (let row = 0; row <= rows; row++) {
-                    const isEdgeCell = row < rows && getKind(col, row) === "obstacle" && getKind(col - 1, row) !== "obstacle";
-                    if (isEdgeCell && runStartRow === null) {
-                        runStartRow = row;
-                    }
-                    else if ((!isEdgeCell || row === rows) && runStartRow !== null) {
-                        const startRow = runStartRow;
-                        const endRow = row - 1;
-                        const x = col * cellW;
-                        const y1 = startRow * cellH;
-                        const y2 = (endRow + 1) * cellH;
-                        const obstacle = {
-                            x1: x,
-                            y1,
-                            x2: x,
-                            y2,
-                            pos: { x, y: (y1 + y2) / 2 },
-                        };
-                        Global.obstacles.push(obstacle);
-                        Global.obstacleTree.insert(obstacle);
-                        runStartRow = null;
-                    }
-                }
-
-                // Right edges for this column
-                runStartRow = null;
-                for (let row = 0; row <= rows; row++) {
-                    const isEdgeCell = row < rows && getKind(col, row) === "obstacle" && getKind(col + 1, row) !== "obstacle";
-                    if (isEdgeCell && runStartRow === null) {
-                        runStartRow = row;
-                    }
-                    else if ((!isEdgeCell || row === rows) && runStartRow !== null) {
-                        const startRow = runStartRow;
-                        const endRow = row - 1;
-                        const x = (col + 1) * cellW;
-                        const y1 = startRow * cellH;
-                        const y2 = (endRow + 1) * cellH;
-                        const obstacle = {
-                            x1: x,
-                            y1,
-                            x2: x,
-                            y2,
-                            pos: { x, y: (y1 + y2) / 2 },
-                        };
-                        Global.obstacles.push(obstacle);
-                        Global.obstacleTree.insert(obstacle);
-                        runStartRow = null;
+                    // Right edges for this column
+                    runStartRow = null;
+                    for (let row = 0; row <= rows; row++) {
+                        const isEdgeCell = row < rows && getKind(col, row) === "obstacle" && getKind(col + 1, row) !== "obstacle";
+                        if (isEdgeCell && runStartRow === null) {
+                            runStartRow = row;
+                        }
+                        else if ((!isEdgeCell || row === rows) && runStartRow !== null) {
+                            const startRow = runStartRow;
+                            const endRow = row - 1;
+                            const x = (col + 1) * cellW;
+                            const y1 = startRow * cellH;
+                            const y2 = (endRow + 1) * cellH;
+                            const obstacle = {
+                                x1: x,
+                                y1,
+                                x2: x,
+                                y2,
+                                pos: { x, y: (y1 + y2) / 2 },
+                            };
+                            Global.obstacles.push(obstacle);
+                            Global.obstacleTree.insert(obstacle);
+                            runStartRow = null;
+                        }
                     }
                 }
             }
@@ -410,6 +494,41 @@ function initSimulation(p) {
     };
 
     const nestPos = pickNestPosition();
+
+    // After choosing the logical nest position from image-map cells,
+    // optionally collapse all "nest" cells down to a single functional
+    // nest cell for rendering when mapShowAllCells is disabled. This way,
+    // only the cell corresponding most closely to the actual nest position
+    // remains of kind "nest" and is drawn when showing functional cells
+    // only.
+    if (Config.useImageMap && !Config.mapShowAllCells && ImageMap.cells && ImageMap.cells.length > 0) {
+        const cells = ImageMap.cells;
+        let bestIdx = null;
+        let bestDistSq = Infinity;
+        for (let i = 0; i < cells.length; i++) {
+            const c = cells[i];
+            if (c.kind !== "nest")
+                continue;
+            const dx = c.worldX - nestPos.x;
+            const dy = c.worldY - nestPos.y;
+            const d2 = dx * dx + dy * dy;
+            if (d2 < bestDistSq) {
+                bestDistSq = d2;
+                bestIdx = i;
+            }
+        }
+        if (bestIdx != null) {
+            for (let i = 0; i < cells.length; i++) {
+                const c = cells[i];
+                if (c.kind === "nest" && i !== bestIdx) {
+                    c.kind = "empty";
+                }
+            }
+            const worldWidthForLayer = Config.simulationWidth || p.width;
+            const worldHeightForLayer = Config.simulationHeight || p.height;
+            rebuildImageMapLayer(p, worldWidthForLayer, worldHeightForLayer);
+        }
+    }
     nest = new Nest(nestPos.x, nestPos.y, antCount);
 
     // Spawn food either from the image map (if enabled) or using the
@@ -609,7 +728,7 @@ function renderSimulation(p) {
         camera.begin();
     }
 
-    drawWorld(p);
+    drawCurrentWorld(p);
 
     if (camera) {
         camera.end();
@@ -636,7 +755,7 @@ function exportWorldImage(p, filename = "ant-simulation-world") {
         pg.pixelDensity(1);
     }
     pg.background(Config.backgroundColor);
-    drawWorld(pg);
+    drawCurrentWorld(pg);
     p.saveCanvas(pg, filename, "png");
 }
 function setPrestartMode(active) {

@@ -6,6 +6,9 @@ export const Config = {
   useCamBounds: false,
   camLiniency: 0.2, // extra space beyond simulation bounds for camera panning
   simulationSpeed: 1.0,
+  // When true, prefer grid/pixel-aligned visuals and movement.
+  // Primarily intended for image-map driven worlds.
+  pixelMode: false,
   useImageMap: false,
   mapImagePath: "",
   mapSampleDepth: 3,
@@ -46,6 +49,9 @@ export const Config = {
   // logical nest radius.
   mapNestUseCellSize: false,
   mapNestCellSizeScale: 0.9,
+  // In pixel mode with an image map, optionally draw the
+  // nest as a pixel-aligned cell block instead of a circle.
+  pixelNestAsCell: true,
   // Entity colors / draw params
   antColor: "#ffffff",
   antSize: 15,
@@ -58,6 +64,9 @@ export const Config = {
   obstacleColor: "#ffaf00",
   nestColor: "#ce5114",
   nestTextColor: "#ffffff",
+  // Whether to display the accumulated food counter at the
+  // nest position in the UI, regardless of mode.
+  showNestFoodCount: true,
   antCount: 100,
   foodSpawnRadius: 50,
   backgroundColor: "#242424",
@@ -81,6 +90,8 @@ export const Config = {
   antSteeringStrength: 0.7,
   antFoVDegrees: 135,
   antWanderStrength: 0.05,
+  // 0 = continuous, 4 = four-way (NES), 8 = eight-way
+  antHeadingQuantizationDirections: 0,
   obstacleAvoidanceRandomness: 0.3,
   obstacleAvoidStrength: 0.6,
   wanderSpeedFactor: 0.85,
@@ -134,6 +145,10 @@ export const Config = {
   pheromoneClusterCellSize: 8,
   foodClusterCellSize: 10,
   quadTreeCapacity: 4,
+  // In pixel mode with an image map, optionally treat obstacle cells
+  // themselves as solid blockers instead of generating line segments
+  // around their edges.
+  pixelUseCellObstacles: false,
   // When using an image map, optionally render and place food only via cells.
   mapFoodRenderCellsOnly: false,
   mapFoodPlacementCellsOnly: false,

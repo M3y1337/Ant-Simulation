@@ -16,24 +16,50 @@ export class Nest {
             this.ants.push(new Ant(x, y, i * spacing, this));
     }
     draw(p) {
-        // Choose a visual radius: in image map mode, optionally
-        // draw the nest as a cell-sized circle while keeping
-        // the logical nest radius (used for behaviour) unchanged.
-        let drawRadius = this.radius;
-        if (Config.useImageMap && Config.mapNestUseCellSize && ImageMap && ImageMap.cellWidth && ImageMap.cellHeight) {
-            const base = Math.min(ImageMap.cellWidth, ImageMap.cellHeight) * 0.5;
-            const scale = Config.mapNestCellSizeScale != null ? Config.mapNestCellSizeScale : 0.9;
-            drawRadius = base * scale;
-        }
-        p.noStroke();
-        p.fill(Config.nestColor || "#ce5114");
-        p.circle(this.pos.x, this.pos.y, drawRadius * 2);
-        p.fill(Config.nestTextColor || 255);
-        // Scale counter text size with nest size and counter digits, clamped to reasonable limits.
-        const txtSize = Math.min(Math.max(drawRadius * 0.8 * Math.max(2, String(this.counter).length), 12), 60);
-        p.textAlign(p.CENTER, p.CENTER);
-        p.textSize(txtSize);
-        p.text(`${this.counter}`, this.pos.x, this.pos.y);
+            // Visual nest representation.
+            // In image map / pixel mode, optionally use a crisp, cell-aligned
+            // shape; otherwise fall back to the original circular nest.
+            let drawRadius = this.radius;
+            const useCellSize = Config.useImageMap && ImageMap && ImageMap.cellWidth && ImageMap.cellHeight;
+
+            if (Config.pixelMode && Config.pixelNestAsCell && useCellSize) {
+                const base = Math.min(ImageMap.cellWidth, ImageMap.cellHeight) * 0.5;
+                const scale = Config.mapNestCellSizeScale != null ? Config.mapNestCellSizeScale : 0.9;
+                drawRadius = base * scale;
+
+                const w = drawRadius * 2;
+                const h = drawRadius * 2;
+
+                p.noStroke();
+                p.rectMode(p.CENTER);
+                // Outer solid block.
+                p.fill(Config.nestColor || "#ce5114");
+                p.rect(this.pos.x, this.pos.y, w, h);
+                // Inner highlight to give a subtle pixel-art feel.
+                const inset = Math.max(1, Math.min(w, h) * 0.25);
+                p.fill(255, 255, 255, 40);
+                p.rect(this.pos.x, this.pos.y, w - inset, h - inset);
+            }
+            else {
+                // Original circular nest.
+                if (Config.useImageMap && Config.mapNestUseCellSize && useCellSize) {
+                    const base = Math.min(ImageMap.cellWidth, ImageMap.cellHeight) * 0.5;
+                    const scale = Config.mapNestCellSizeScale != null ? Config.mapNestCellSizeScale : 0.9;
+                    drawRadius = base * scale;
+                }
+                p.noStroke();
+                p.fill(Config.nestColor || "#ce5114");
+                p.circle(this.pos.x, this.pos.y, drawRadius * 2);
+            }
+
+            // Counter text (optionally drawn in both modes).
+            if (Config.showNestFoodCount) {
+                p.fill(Config.nestTextColor || 255);
+                const txtSize = Math.min(Math.max(drawRadius * 0.8 * Math.max(2, String(this.counter).length), 12), 60);
+                p.textAlign(p.CENTER, p.CENTER);
+                p.textSize(txtSize);
+                p.text(`${this.counter}`, this.pos.x, this.pos.y);
+            }
     }
     spawnFood(x, y, radius) {
         for (let i = -radius; i < radius; i += 10) {

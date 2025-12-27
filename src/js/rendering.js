@@ -96,6 +96,82 @@ export function renderClusteredPheromones(p, visibleRedPheromones, visibleBluePh
   drawPheroBuckets(blueCells, blueRGB.r, blueRGB.g, blueRGB.b, blueUseDiff, blueStrength);
 }
 
+// Simpler, pixel-aligned pheromone rendering for pixel mode.
+// Pheromones are accumulated per image-map cell (or approximate pixel cell)
+// and drawn as solid rectangles at cell centers to preserve a crisp look.
+export function renderPixelPheromones(p, visibleRedPheromones, visibleBluePheromones, cellWidth, cellHeight, cols, rows) {
+  if (!cellWidth || !cellHeight) return;
+
+  const redCells = new Map();
+  const blueCells = new Map();
+
+  const accumulate = (map, elem) => {
+    const ph = elem.value;
+    const col = Math.max(0, Math.min(cols - 1, Math.floor(ph.pos.x / cellWidth)));
+    const row = Math.max(0, Math.min(rows - 1, Math.floor(ph.pos.y / cellHeight)));
+    const key = col + "," + row;
+    const normLife = ph.lifeAmount > 0 ? ph.life / ph.lifeAmount : 0;
+    let bucket = map.get(key);
+    if (!bucket) {
+      bucket = { col, row, intensitySum: 0, count: 0 };
+      map.set(key, bucket);
+    }
+    bucket.intensitySum += normLife;
+    bucket.count += 1;
+  };
+
+  for (const elem of visibleRedPheromones) accumulate(redCells, elem);
+  for (const elem of visibleBluePheromones) accumulate(blueCells, elem);
+
+  const hexToRgb = (hex, fallback) => {
+    if (!hex || typeof hex !== "string") return fallback;
+    let h = hex.trim();
+    if (h[0] === "#") h = h.slice(1);
+    if (h.length === 3) {
+      h = h.split("").map((c) => c + c).join("");
+    }
+    if (h.length !== 6) return fallback;
+    const num = parseInt(h, 16);
+    if (Number.isNaN(num)) return fallback;
+    return {
+      r: (num >> 16) & 255,
+      g: (num >> 8) & 255,
+      b: num & 255,
+    };
+  };
+
+  const redDefaults = { r: 253, g: 33, b: 8 };
+  const blueDefaults = { r: 66, g: 135, b: 245 };
+  const redRGB = hexToRgb(Config.pheromoneRedColor, redDefaults);
+  const blueRGB = hexToRgb(Config.pheromoneBlueColor, blueDefaults);
+
+  const drawBuckets = (map, rgb) => {
+    for (const bucket of map.values()) {
+      const avgIntensity = bucket.count > 0 ? bucket.intensitySum / bucket.count : 0;
+      let alpha = Math.min(255, avgIntensity * 255 * bucket.count);
+      if (alpha < 5) continue;
+
+      const intensityFactor = Config.pheromoneMaxIntensity != null ? Config.pheromoneMaxIntensity : 1.0;
+      if (intensityFactor !== 1.0) {
+        alpha *= intensityFactor;
+      }
+      if (alpha > 255) alpha = 255;
+      if (alpha < 0) alpha = 0;
+
+      const cx = (bucket.col + 0.5) * cellWidth;
+      const cy = (bucket.row + 0.5) * cellHeight;
+
+      p.noStroke();
+      p.rectMode(p.CENTER);
+      p.fill(rgb.r, rgb.g, rgb.b, alpha);
+      p.rect(cx, cy, cellWidth, cellHeight);
+    }
+  };
+
+  drawBuckets(redCells, redRGB);
+  drawBuckets(blueCells, blueRGB);
+}
+
 export function renderClusteredFood(p, visibleFood) {
   const cellSize = Config.foodClusterCellSize || 8; // pixels
   const foodCells = new Map();
@@ -226,5 +302,107 @@ export function renderClusteredFood(p, visibleFood) {
       p.text(String(cluster.count), x, y);
       p.fill(foodRGB.r, foodRGB.g, foodRGB.b);
     }
+  }
+}
+
+// Pixel-mode food rendering: draw per-cell food overlays based on
+// ImageMap-style cell dimensions and remaining food units in each cell.
+// This is driven from ImageMap state in sketch.js rather than the Food
+// objects themselves so visuals always match cell depletion.
+export function renderPixelFood(p, imageMap, baseColor) {
+  if (!imageMap || !imageMap.cells || !imageMap.cells.length) return;
+
+  const cells = imageMap.cells;
+  const cellW = imageMap.cellWidth;
+  const cellH = imageMap.cellHeight;
+  if (!cellW || !cellH) return;
+
+  const hexToRgb = (hex, fallback) => {
+    if (!hex || typeof hex !== "string") return fallback;
+    let h = hex.trim();
+    if (h[0] === "#") h = h.slice(1);
+    if (h.length === 3) {
+      h = h.split("").map((c) => c + c).join("");
+    }
+    if (h.length !== 6) return fallback;
+    const num = parseInt(h, 16);
+    if (Number.isNaN(num)) return fallback;
+    return {
+      r: (num >> 16) & 255,
+      g: (num >> 8) & 255,
+      b: num & 255,
+    };
+  };
+
+  const defaults = { r: 0, g: 255, b: 0 };
+  const rgb = baseColor
+    ? hexToRgb(baseColor, defaults)
+    : hexToRgb(Config.foodColor, defaults);
+
+  p.noStroke();
+  p.rectMode(p.CENTER);
+
+  for (const cell of cells) {
+    if (cell.kind !== "food") continue;
+    if (!cell.maxFoodUnits || cell.foodUnits <= 0) continue;
+
+    const ratio = cell.maxFoodUnits > 0 ? cell.foodUnits / cell.maxFoodUnits : 0;
+    if (ratio <= 0) continue;
+
+    const alpha = 80 + Math.round(175 * ratio);
+    const inset = Math.max(1, Math.min(cellW, cellH) * 0.25);
+    const w = Math.max(1, cellW - inset * 2);
+    const h = Math.max(1, cellH - inset * 2);
+
+    p.fill(rgb.r, rgb.g, rgb.b, alpha);
+    p.rect(cell.worldX, cell.worldY, w, h);
+  }
+}
+
+// Pixel-mode obstacle rendering: draw per-cell obstacle overlays based on
+// ImageMap cell dimensions. This is used when pixel cell obstacles are
+// enabled so that obstacle cells are clearly visible as solid blocks.
+export function renderPixelObstacles(p, imageMap, baseColor) {
+  if (!imageMap || !imageMap.cells || !imageMap.cells.length) return;
+
+  const cells = imageMap.cells;
+  const cellW = imageMap.cellWidth;
+  const cellH = imageMap.cellHeight;
+  if (!cellW || !cellH) return;
+
+  const hexToRgb = (hex, fallback) => {
+    if (!hex || typeof hex !== "string") return fallback;
+    let h = hex.trim();
+    if (h[0] === "#") h = h.slice(1);
+    if (h.length === 3) {
+      h = h.split("").map((c) => c + c).join("");
+    }
+    if (h.length !== 6) return fallback;
+    const num = parseInt(h, 16);
+    if (Number.isNaN(num)) return fallback;
+    return {
+      r: (num >> 16) & 255,
+      g: (num >> 8) & 255,
+      b: num & 255,
+    };
+  };
+
+  const defaults = { r: 255, g: 175, b: 0 };
+  const rgb = baseColor
+    ? hexToRgb(baseColor, defaults)
+    : hexToRgb(Config.obstacleColor, defaults);
+
+  p.noStroke();
+  p.rectMode(p.CENTER);
+
+  for (const cell of cells) {
+    if (cell.kind !== "obstacle") continue;
+
+    const inset = Math.max(0, Math.min(cellW, cellH) * 0.1);
+    const w = Math.max(1, cellW - inset * 2);
+    const h = Math.max(1, cellH - inset * 2);
+
+    p.fill(rgb.r, rgb.g, rgb.b);
+    p.rect(cell.worldX, cell.worldY, w, h);
   }
 }

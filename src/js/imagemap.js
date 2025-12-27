@@ -257,3 +257,50 @@ export function onMapFoodConsumed(cellIndex) {
     ImageMap.dirtyIndices.push(cellIndex);
   }
 }
+
+// Helper: return true if the given world-space point lies inside a
+// non-empty image-map cell of kind "obstacle".
+export function isObstacleCellAtWorld(x, y) {
+  const { cols, rows, cellWidth, cellHeight, cells } = ImageMap;
+  if (!cells || cells.length === 0 || !cellWidth || !cellHeight) return false;
+
+  const col = Math.floor(x / cellWidth);
+  const row = Math.floor(y / cellHeight);
+  if (col < 0 || col >= cols || row < 0 || row >= rows) return false;
+  const idx = row * cols + col;
+  const cell = cells[idx];
+  return !!cell && cell.kind === "obstacle";
+}
+
+// Helper: coarse line-of-sight test against obstacle cells. Samples
+// points along the segment and returns true if any sample lies in an
+// obstacle cell. Intended for pixel-mode image-map obstacle checks.
+export function isLineBlockedByObstacleCells(x1, y1, x2, y2) {
+  const { cellWidth, cellHeight } = ImageMap;
+  if (!cellWidth || !cellHeight) return false;
+
+  const worldWidth = Config.simulationWidth;
+  const worldHeight = Config.simulationHeight;
+
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const steps = Math.max(1, Math.ceil(Math.max(Math.abs(dx) / cellWidth, Math.abs(dy) / cellHeight) * 2));
+
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const x = x1 + dx * t;
+    const y = y1 + dy * t;
+    // Treat leaving the simulation world rectangle as a blocking
+    // condition so that, in pixel cell obstacle mode, world borders
+    // behave like solid obstacles for line-of-sight and collision.
+    if (worldWidth != null && worldHeight != null) {
+      if (x < 0 || x > worldWidth || y < 0 || y > worldHeight) {
+        return true;
+      }
+    }
+    if (isObstacleCellAtWorld(x, y)) {
+      return true;
+    }
+  }
+  return false;
+}

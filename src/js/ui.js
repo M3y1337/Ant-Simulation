@@ -10,6 +10,7 @@ let antFoVInput = null;
 let antFoVValueLabel = null;
 let antWanderStrengthInput = null;
 let antWanderStrengthValueLabel = null;
+let antHeadingQuantizationSelect = null;
 let antSightInput = null;
 let antSightValueLabel = null;
 let simulationSpeedInput = null;
@@ -70,6 +71,8 @@ let mapNestDilateIterationsInput = null;
 let mapNestErodeIterationsInput = null;
 let mapFoodRenderCellsOnlyInput = null;
 let mapFoodPlacementCellsOnlyInput = null;
+let pixelNestAsCellInput = null;
+let showNestFoodCountInput = null;
 let colorDistanceMethodSelect = null;
 let palettePreviewContainer = null;
 let autoAssignPaletteButton = null;
@@ -150,6 +153,8 @@ let obstacleQueryMethodSelect = null;
 let pheromoneMaxRadiusInput = null;
 let pheromoneMaxIntensityInput = null;
 let skipPheromoneOnCollisionPauseInput = null;
+let pixelModeInput = null;
+let pixelUseCellObstaclesInput = null;
 
 // options:
 //  - getNest(): Nest | null
@@ -190,6 +195,7 @@ export function setupUI(options) {
   antFoVValueLabel = document.getElementById("antFoVValue");
   antWanderStrengthInput = document.getElementById("antWanderStrength");
   antWanderStrengthValueLabel = document.getElementById("antWanderStrengthValue");
+  antHeadingQuantizationSelect = document.getElementById("antHeadingQuantizationDirections");
   antSightInput = document.getElementById("antSight");
   antSightValueLabel = document.getElementById("antSightValue");
   simulationSpeedInput = document.getElementById("simulationSpeed");
@@ -229,6 +235,8 @@ export function setupUI(options) {
   mapFoodColorInput = document.getElementById("mapFoodColor");
   mapObstacleColorInput = document.getElementById("mapObstacleColor");
   mapNestColorInput = document.getElementById("mapNestColor");
+  pixelNestAsCellInput = document.getElementById("pixelNestAsCell");
+  showNestFoodCountInput = document.getElementById("showNestFoodCount");
   mapFoodDepletedColorInput = document.getElementById("mapFoodDepletedColor");
   mapColorToleranceInput = document.getElementById("mapColorTolerance");
   mapColorToleranceValueLabel = document.getElementById("mapColorToleranceValue");
@@ -316,6 +324,8 @@ export function setupUI(options) {
   pheromoneMaxRadiusInput = document.getElementById("pheromoneMaxRadius");
   pheromoneMaxIntensityInput = document.getElementById("pheromoneMaxIntensity");
   skipPheromoneOnCollisionPauseInput = document.getElementById("skipPheromoneOnCollisionPause");
+  pixelModeInput = document.getElementById("pixelMode");
+  pixelUseCellObstaclesInput = document.getElementById("pixelUseCellObstacles");
 
   antColorInput = document.getElementById("antColor");
   antSizeInput = document.getElementById("antSize");
@@ -402,6 +412,17 @@ export function setupUI(options) {
         if (nest) {
           for (const ant of nest.ants) ant.wanderStrength = Config.antWanderStrength;
         }
+      }
+    });
+  }
+
+  if (antHeadingQuantizationSelect) {
+    const dirs = Config.antHeadingQuantizationDirections != null ? Config.antHeadingQuantizationDirections : 0;
+    antHeadingQuantizationSelect.value = String(dirs);
+    antHeadingQuantizationSelect.addEventListener("change", () => {
+      const v = parseInt(antHeadingQuantizationSelect.value, 10);
+      if (!Number.isNaN(v) && (v === 0 || v === 4 || v === 8)) {
+        Config.antHeadingQuantizationDirections = v;
       }
     });
   }
@@ -615,6 +636,25 @@ export function setupUI(options) {
     pauseWhenNoFoodInput.checked = !!Config.pauseWhenNoFood;
     pauseWhenNoFoodInput.addEventListener("change", () => {
       Config.pauseWhenNoFood = pauseWhenNoFoodInput.checked;
+    });
+  }
+
+  if (pixelModeInput) {
+    pixelModeInput.checked = !!Config.pixelMode;
+    pixelModeInput.addEventListener("change", () => {
+      Config.pixelMode = pixelModeInput.checked;
+      // Pixel mode affects how the world is rendered and how
+      // positions are interpreted, so rebuild the simulation.
+      resetSimulation();
+    });
+  }
+
+  if (pixelUseCellObstaclesInput) {
+    pixelUseCellObstaclesInput.checked = !!Config.pixelUseCellObstacles;
+    pixelUseCellObstaclesInput.addEventListener("change", () => {
+      Config.pixelUseCellObstacles = pixelUseCellObstaclesInput.checked;
+      // Changing obstacle representation requires a rebuild.
+      resetSimulation();
     });
   }
 
@@ -1045,6 +1085,13 @@ export function setupUI(options) {
     });
   }
 
+  if (pixelNestAsCellInput) {
+    pixelNestAsCellInput.checked = !!Config.pixelNestAsCell;
+    pixelNestAsCellInput.addEventListener("change", () => {
+      Config.pixelNestAsCell = pixelNestAsCellInput.checked;
+    });
+  }
+
   if (mapNestCellSizeScaleInput) {
     mapNestCellSizeScaleInput.value = String(
       Config.mapNestCellSizeScale != null ? Config.mapNestCellSizeScale : 0.9
@@ -1054,6 +1101,13 @@ export function setupUI(options) {
       if (!Number.isNaN(value) && value > 0) {
         Config.mapNestCellSizeScale = value;
       }
+    });
+  }
+
+  if (showNestFoodCountInput) {
+    showNestFoodCountInput.checked = !!Config.showNestFoodCount;
+    showNestFoodCountInput.addEventListener("change", () => {
+      Config.showNestFoodCount = showNestFoodCountInput.checked;
     });
   }
 
@@ -1758,6 +1812,10 @@ export function refreshUIFromConfig() {
     antSightInput.value = String(Config.antSight);
     if (antSightValueLabel) antSightValueLabel.textContent = antSightInput.value;
   }
+  if (antHeadingQuantizationSelect) {
+    const dirs = Config.antHeadingQuantizationDirections != null ? Config.antHeadingQuantizationDirections : 0;
+    antHeadingQuantizationSelect.value = String(dirs);
+  }
 
   if (antPheromoneFrequencyInput) {
     antPheromoneFrequencyInput.value = String(Config.antPheromoneFrequency);
@@ -1821,6 +1879,12 @@ export function refreshUIFromConfig() {
   }
   if (simHeightInput) {
     simHeightInput.value = String(Config.simulationHeight);
+  }
+  if (pixelModeInput) {
+    pixelModeInput.checked = !!Config.pixelMode;
+  }
+  if (pixelUseCellObstaclesInput) {
+    pixelUseCellObstaclesInput.checked = !!Config.pixelUseCellObstacles;
   }
   if (useCamBoundsInput) {
     useCamBoundsInput.checked = !!Config.useCamBounds;
