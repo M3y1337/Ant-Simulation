@@ -3,7 +3,7 @@ import { Nest } from "./nest.js";
 import { QuadTree, Rectangle } from "./quadtree.js";
 import { Vector } from "./vector.js";
 import { Config } from "./config.js";
-import { setupUI, syncPauseUI, syncDebugUI, updateFPSUI, setUIPanelVisible, syncHUDUI, updatePalettePreview, updateStatusMessage } from "./ui.js";
+import { setupUI, syncPauseUI, syncDebugUI, updateFPSUI, setUIPanelVisible, syncHUDUI, updatePalettePreview, updateStatusMessage, setUIPhase } from "./ui.js";
 import { renderClusteredPheromones, renderClusteredFood, renderPixelPheromones, renderPixelFood, renderPixelObstacles } from "./rendering.js";
 import { rebuildObstacleGrid, drawObstacles } from "./obstacle.js";
 import { Camera } from "./Camera.js";
@@ -764,9 +764,11 @@ function setPrestartMode(active) {
         return;
     if (active) {
         body.classList.add("prestart");
+        setUIPhase(true);
     }
     else {
         body.classList.remove("prestart");
+        setUIPhase(false);
     }
 }
 const sketch = (p) => {
@@ -884,7 +886,18 @@ const sketch = (p) => {
         p.resizeCanvas(p.windowWidth, p.windowHeight);
         //initSimulation(p);
     };
-    p.keyPressed = () => {
+    p.keyPressed = (event) => {
+        // Ignore global hotkeys while typing inside the UI (inputs, textareas, selects).
+        const active = document.activeElement;
+        if (active && active instanceof HTMLElement) {
+            const tag = active.tagName;
+            const isFormField = tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || active.isContentEditable;
+            if (isFormField) {
+                // Let the UI element handle the key normally.
+                return;
+            }
+        }
+
         if (p.key === "f" || p.key === "F")
             Global.tool = 0;
         else if (p.key === "o" || p.key === "O")

@@ -1,3 +1,4 @@
+const DEFAULTCONFIGPATH = "cfg/v1_4_pchristmas8.json";
 export const Config = {
   // World / visuals
   configPath: "", // optional JSON config URL/path for loading/saving

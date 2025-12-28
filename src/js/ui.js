@@ -156,6 +156,34 @@ let skipPheromoneOnCollisionPauseInput = null;
 let pixelModeInput = null;
 let pixelUseCellObstaclesInput = null;
 
+// UI layout configuration for prestart vs running phases
+// This controls per-section visibility and default collapsed state.
+// Adjust these settings to change the UI without touching logic.
+const UIPhaseConfig = {
+  prestart: {
+    sections: {
+      ants: { visible: true, collapsed: false },
+      simulation: { visible: true, collapsed: false },
+      pheromones: { visible: true, collapsed: false },
+      "food-obstacles": { visible: true, collapsed: false },
+      "image-map": { visible: true, collapsed: false },
+      config: { visible: true, collapsed: true },
+      debug: { visible: true, collapsed: true },
+    },
+  },
+  running: {
+    sections: {
+      ants: { visible: true, collapsed: false },
+      simulation: { visible: true, collapsed: false },
+      pheromones: { visible: true, collapsed: false },
+      "food-obstacles": { visible: true, collapsed: false },
+      "image-map": { visible: true, collapsed: true },
+      config: { visible: true, collapsed: true },
+      debug: { visible: true, collapsed: false },
+    },
+  },
+};
+
 // options:
 //  - getNest(): Nest | null
 //  - getDebug(): { sensors: boolean; quadTree: boolean; antState: boolean }
@@ -341,56 +369,104 @@ export function setupUI(options) {
 
   if (antCountInput) {
     antCountInput.value = String(Config.antCount);
-    if (antCountValueLabel) antCountValueLabel.textContent = antCountInput.value;
+    if (antCountValueLabel) antCountValueLabel.value = antCountInput.value;
     antCountInput.addEventListener("input", () => {
       const value = parseInt(antCountInput.value, 10);
       if (!Number.isNaN(value)) {
         Config.antCount = value;
-        if (antCountValueLabel) antCountValueLabel.textContent = antCountInput.value;
+        if (antCountValueLabel) antCountValueLabel.value = antCountInput.value;
       }
     });
+    if (antCountValueLabel) {
+      antCountValueLabel.addEventListener("input", () => {
+        let value = parseInt(antCountValueLabel.value, 10);
+        if (Number.isNaN(value)) return;
+        const min = antCountInput.min !== "" ? parseInt(antCountInput.min, 10) : null;
+        const max = antCountInput.max !== "" ? parseInt(antCountInput.max, 10) : null;
+        const step = antCountInput.step !== "" && antCountInput.step !== "any" ? parseInt(antCountInput.step, 10) : null;
+        if (min != null && value < min) value = min;
+        if (max != null && value > max) value = max;
+        if (step != null && step > 0) {
+          value = Math.round(value / step) * step;
+        }
+        antCountInput.value = String(value);
+        antCountInput.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+    }
   }
 
   if (antSpeedInput) {
     antSpeedInput.value = String(Config.antSpeed);
-    if (antSpeedValueLabel) antSpeedValueLabel.textContent = antSpeedInput.value;
+    if (antSpeedValueLabel) antSpeedValueLabel.value = antSpeedInput.value;
     antSpeedInput.addEventListener("input", () => {
       const value = parseInt(antSpeedInput.value, 10);
       if (!Number.isNaN(value)) {
         Config.antSpeed = value;
-        if (antSpeedValueLabel) antSpeedValueLabel.textContent = antSpeedInput.value;
+        if (antSpeedValueLabel) antSpeedValueLabel.value = antSpeedInput.value;
         const nest = getNest();
         if (nest) {
           for (const ant of nest.ants) ant.speed = Config.antSpeed;
         }
       }
     });
+    if (antSpeedValueLabel) {
+      antSpeedValueLabel.addEventListener("input", () => {
+        let value = parseInt(antSpeedValueLabel.value, 10);
+        if (Number.isNaN(value)) return;
+        const min = antSpeedInput.min !== "" ? parseInt(antSpeedInput.min, 10) : null;
+        const max = antSpeedInput.max !== "" ? parseInt(antSpeedInput.max, 10) : null;
+        const step = antSpeedInput.step !== "" && antSpeedInput.step !== "any" ? parseInt(antSpeedInput.step, 10) : null;
+        if (min != null && value < min) value = min;
+        if (max != null && value > max) value = max;
+        if (step != null && step > 0) {
+          value = Math.round(value / step) * step;
+        }
+        antSpeedInput.value = String(value);
+        antSpeedInput.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+    }
   }
 
   if (antSteeringStrengthInput) {
     antSteeringStrengthInput.value = String(Config.antSteeringStrength);
-    if (antSteeringStrengthValueLabel) antSteeringStrengthValueLabel.textContent = antSteeringStrengthInput.value;
+    if (antSteeringStrengthValueLabel) antSteeringStrengthValueLabel.value = antSteeringStrengthInput.value;
     antSteeringStrengthInput.addEventListener("input", () => {
       const value = parseFloat(antSteeringStrengthInput.value);
       if (!Number.isNaN(value)) {
         Config.antSteeringStrength = value;
-        if (antSteeringStrengthValueLabel) antSteeringStrengthValueLabel.textContent = antSteeringStrengthInput.value;
+        if (antSteeringStrengthValueLabel) antSteeringStrengthValueLabel.value = antSteeringStrengthInput.value;
         const nest = getNest();
         if (nest) {
           for (const ant of nest.ants) ant.steeringStrength = Config.antSteeringStrength;
         }
       }
     });
+    if (antSteeringStrengthValueLabel) {
+      antSteeringStrengthValueLabel.addEventListener("input", () => {
+        let value = parseFloat(antSteeringStrengthValueLabel.value);
+        if (Number.isNaN(value)) return;
+        const min = antSteeringStrengthInput.min !== "" ? parseFloat(antSteeringStrengthInput.min) : null;
+        const max = antSteeringStrengthInput.max !== "" ? parseFloat(antSteeringStrengthInput.max) : null;
+        const step = antSteeringStrengthInput.step !== "" && antSteeringStrengthInput.step !== "any" ? parseFloat(antSteeringStrengthInput.step) : null;
+        if (min != null && value < min) value = min;
+        if (max != null && value > max) value = max;
+        if (step != null && step > 0) {
+          value = Math.round(value / step) * step;
+        }
+        antSteeringStrengthInput.value = String(value);
+        antSteeringStrengthInput.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+    }
   }
 
   if (antFoVInput) {
     antFoVInput.value = String(Config.antFoVDegrees);
-    if (antFoVValueLabel) antFoVValueLabel.textContent = antFoVInput.value;
+    if (antFoVValueLabel) antFoVValueLabel.value = antFoVInput.value;
     antFoVInput.addEventListener("input", () => {
       const valueDeg = parseFloat(antFoVInput.value);
       if (!Number.isNaN(valueDeg)) {
         Config.antFoVDegrees = valueDeg;
-        if (antFoVValueLabel) antFoVValueLabel.textContent = antFoVInput.value;
+        if (antFoVValueLabel) antFoVValueLabel.value = antFoVInput.value;
         const fovRad = (valueDeg * Math.PI) / 180;
         const nest = getNest();
         if (nest) {
@@ -398,16 +474,32 @@ export function setupUI(options) {
         }
       }
     });
+    if (antFoVValueLabel) {
+      antFoVValueLabel.addEventListener("input", () => {
+        let value = parseFloat(antFoVValueLabel.value);
+        if (Number.isNaN(value)) return;
+        const min = antFoVInput.min !== "" ? parseFloat(antFoVInput.min) : null;
+        const max = antFoVInput.max !== "" ? parseFloat(antFoVInput.max) : null;
+        const step = antFoVInput.step !== "" && antFoVInput.step !== "any" ? parseFloat(antFoVInput.step) : null;
+        if (min != null && value < min) value = min;
+        if (max != null && value > max) value = max;
+        if (step != null && step > 0) {
+          value = Math.round(value / step) * step;
+        }
+        antFoVInput.value = String(value);
+        antFoVInput.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+    }
   }
 
   if (antWanderStrengthInput) {
     antWanderStrengthInput.value = String(Config.antWanderStrength);
-    if (antWanderStrengthValueLabel) antWanderStrengthValueLabel.textContent = antWanderStrengthInput.value;
+    if (antWanderStrengthValueLabel) antWanderStrengthValueLabel.value = antWanderStrengthInput.value;
     antWanderStrengthInput.addEventListener("input", () => {
       const value = parseFloat(antWanderStrengthInput.value);
       if (!Number.isNaN(value)) {
         Config.antWanderStrength = value;
-        if (antWanderStrengthValueLabel) antWanderStrengthValueLabel.textContent = antWanderStrengthInput.value;
+        if (antWanderStrengthValueLabel) antWanderStrengthValueLabel.value = antWanderStrengthInput.value;
         const nest = getNest();
         if (nest) {
           for (const ant of nest.ants) ant.wanderStrength = Config.antWanderStrength;
@@ -429,18 +521,34 @@ export function setupUI(options) {
 
   if (antSightInput) {
     antSightInput.value = String(Config.antSight);
-    if (antSightValueLabel) antSightValueLabel.textContent = antSightInput.value;
+    if (antSightValueLabel) antSightValueLabel.value = antSightInput.value;
     antSightInput.addEventListener("input", () => {
       const value = parseInt(antSightInput.value, 10);
       if (!Number.isNaN(value)) {
         Config.antSight = value;
-        if (antSightValueLabel) antSightValueLabel.textContent = antSightInput.value;
+        if (antSightValueLabel) antSightValueLabel.value = antSightInput.value;
         const nest = getNest();
         if (nest) {
           for (const ant of nest.ants) ant.sight = Config.antSight;
         }
       }
     });
+    if (antSightValueLabel) {
+      antSightValueLabel.addEventListener("input", () => {
+        let value = parseInt(antSightValueLabel.value, 10);
+        if (Number.isNaN(value)) return;
+        const min = antSightInput.min !== "" ? parseInt(antSightInput.min, 10) : null;
+        const max = antSightInput.max !== "" ? parseInt(antSightInput.max, 10) : null;
+        const step = antSightInput.step !== "" && antSightInput.step !== "any" ? parseInt(antSightInput.step, 10) : null;
+        if (min != null && value < min) value = min;
+        if (max != null && value > max) value = max;
+        if (step != null && step > 0) {
+          value = Math.round(value / step) * step;
+        }
+        antSightInput.value = String(value);
+        antSightInput.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+    }
   }
 
   if (antPheromoneFrequencyInput) {
@@ -615,14 +723,30 @@ export function setupUI(options) {
 
   if (simulationSpeedInput) {
     simulationSpeedInput.value = String(Config.simulationSpeed);
-    if (simulationSpeedValueLabel) simulationSpeedValueLabel.textContent = simulationSpeedInput.value;
+    if (simulationSpeedValueLabel) simulationSpeedValueLabel.value = simulationSpeedInput.value;
     simulationSpeedInput.addEventListener("input", () => {
       const value = parseFloat(simulationSpeedInput.value);
       if (!Number.isNaN(value)) {
         Config.simulationSpeed = value;
-        if (simulationSpeedValueLabel) simulationSpeedValueLabel.textContent = simulationSpeedInput.value;
+        if (simulationSpeedValueLabel) simulationSpeedValueLabel.value = simulationSpeedInput.value;
       }
     });
+    if (simulationSpeedValueLabel) {
+      simulationSpeedValueLabel.addEventListener("input", () => {
+        let value = parseFloat(simulationSpeedValueLabel.value);
+        if (Number.isNaN(value)) return;
+        const min = simulationSpeedInput.min !== "" ? parseFloat(simulationSpeedInput.min) : null;
+        const max = simulationSpeedInput.max !== "" ? parseFloat(simulationSpeedInput.max) : null;
+        const step = simulationSpeedInput.step !== "" && simulationSpeedInput.step !== "any" ? parseFloat(simulationSpeedInput.step) : null;
+        if (min != null && value < min) value = min;
+        if (max != null && value > max) value = max;
+        if (step != null && step > 0) {
+          value = Math.round(value / step) * step;
+        }
+        simulationSpeedInput.value = String(value);
+        simulationSpeedInput.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+    }
   }
 
   if (autoStartSimulationInput) {
@@ -709,14 +833,30 @@ export function setupUI(options) {
 
   if (pheromoneLifeInput) {
     pheromoneLifeInput.value = String(Config.pheromoneLife);
-    if (pheromoneLifeValueLabel) pheromoneLifeValueLabel.textContent = pheromoneLifeInput.value;
+    if (pheromoneLifeValueLabel) pheromoneLifeValueLabel.value = pheromoneLifeInput.value;
     pheromoneLifeInput.addEventListener("input", () => {
       const value = parseInt(pheromoneLifeInput.value, 10);
       if (!Number.isNaN(value)) {
         Config.pheromoneLife = value;
-        if (pheromoneLifeValueLabel) pheromoneLifeValueLabel.textContent = pheromoneLifeInput.value;
+        if (pheromoneLifeValueLabel) pheromoneLifeValueLabel.value = pheromoneLifeInput.value;
       }
     });
+    if (pheromoneLifeValueLabel) {
+      pheromoneLifeValueLabel.addEventListener("input", () => {
+        let value = parseInt(pheromoneLifeValueLabel.value, 10);
+        if (Number.isNaN(value)) return;
+        const min = pheromoneLifeInput.min !== "" ? parseInt(pheromoneLifeInput.min, 10) : null;
+        const max = pheromoneLifeInput.max !== "" ? parseInt(pheromoneLifeInput.max, 10) : null;
+        const step = pheromoneLifeInput.step !== "" && pheromoneLifeInput.step !== "any" ? parseInt(pheromoneLifeInput.step, 10) : null;
+        if (min != null && value < min) value = min;
+        if (max != null && value > max) value = max;
+        if (step != null && step > 0) {
+          value = Math.round(value / step) * step;
+        }
+        pheromoneLifeInput.value = String(value);
+        pheromoneLifeInput.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+    }
   }
 
   if (redPheromoneLifeInput) {
@@ -749,26 +889,58 @@ export function setupUI(options) {
 
   if (pheromoneLowScoreThresholdInput) {
     pheromoneLowScoreThresholdInput.value = String(Config.pheromoneLowScoreThreshold);
-    if (pheromoneLowScoreThresholdValueLabel) pheromoneLowScoreThresholdValueLabel.textContent = pheromoneLowScoreThresholdInput.value;
+    if (pheromoneLowScoreThresholdValueLabel) pheromoneLowScoreThresholdValueLabel.value = pheromoneLowScoreThresholdInput.value;
     pheromoneLowScoreThresholdInput.addEventListener("input", () => {
       const value = parseFloat(pheromoneLowScoreThresholdInput.value);
       if (!Number.isNaN(value)) {
         Config.pheromoneLowScoreThreshold = value;
-        if (pheromoneLowScoreThresholdValueLabel) pheromoneLowScoreThresholdValueLabel.textContent = pheromoneLowScoreThresholdInput.value;
+        if (pheromoneLowScoreThresholdValueLabel) pheromoneLowScoreThresholdValueLabel.value = pheromoneLowScoreThresholdInput.value;
       }
     });
   }
 
   if (pheromoneIgnoreProbabilityInput) {
     pheromoneIgnoreProbabilityInput.value = String(Config.pheromoneIgnoreProbability);
-    if (pheromoneIgnoreProbabilityValueLabel) pheromoneIgnoreProbabilityValueLabel.textContent = pheromoneIgnoreProbabilityInput.value;
+    if (pheromoneIgnoreProbabilityValueLabel) pheromoneIgnoreProbabilityValueLabel.value = pheromoneIgnoreProbabilityInput.value;
     pheromoneIgnoreProbabilityInput.addEventListener("input", () => {
       const value = parseFloat(pheromoneIgnoreProbabilityInput.value);
       if (!Number.isNaN(value)) {
         Config.pheromoneIgnoreProbability = value;
-        if (pheromoneIgnoreProbabilityValueLabel) pheromoneIgnoreProbabilityValueLabel.textContent = pheromoneIgnoreProbabilityInput.value;
+        if (pheromoneIgnoreProbabilityValueLabel) pheromoneIgnoreProbabilityValueLabel.value = pheromoneIgnoreProbabilityInput.value;
       }
     });
+    if (pheromoneLowScoreThresholdValueLabel) {
+      pheromoneLowScoreThresholdValueLabel.addEventListener("input", () => {
+        let value = parseFloat(pheromoneLowScoreThresholdValueLabel.value);
+        if (Number.isNaN(value)) return;
+        const min = pheromoneLowScoreThresholdInput.min !== "" ? parseFloat(pheromoneLowScoreThresholdInput.min) : null;
+        const max = pheromoneLowScoreThresholdInput.max !== "" ? parseFloat(pheromoneLowScoreThresholdInput.max) : null;
+        const step = pheromoneLowScoreThresholdInput.step !== "" && pheromoneLowScoreThresholdInput.step !== "any" ? parseFloat(pheromoneLowScoreThresholdInput.step) : null;
+        if (min != null && value < min) value = min;
+        if (max != null && value > max) value = max;
+        if (step != null && step > 0) {
+          value = Math.round(value / step) * step;
+        }
+        pheromoneLowScoreThresholdInput.value = String(value);
+        pheromoneLowScoreThresholdInput.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+    }
+    if (pheromoneIgnoreProbabilityValueLabel) {
+      pheromoneIgnoreProbabilityValueLabel.addEventListener("input", () => {
+        let value = parseFloat(pheromoneIgnoreProbabilityValueLabel.value);
+        if (Number.isNaN(value)) return;
+        const min = pheromoneIgnoreProbabilityInput.min !== "" ? parseFloat(pheromoneIgnoreProbabilityInput.min) : null;
+        const max = pheromoneIgnoreProbabilityInput.max !== "" ? parseFloat(pheromoneIgnoreProbabilityInput.max) : null;
+        const step = pheromoneIgnoreProbabilityInput.step !== "" && pheromoneIgnoreProbabilityInput.step !== "any" ? parseFloat(pheromoneIgnoreProbabilityInput.step) : null;
+        if (min != null && value < min) value = min;
+        if (max != null && value > max) value = max;
+        if (step != null && step > 0) {
+          value = Math.round(value / step) * step;
+        }
+        pheromoneIgnoreProbabilityInput.value = String(value);
+        pheromoneIgnoreProbabilityInput.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+    }
   }
 
   if (pheromoneDiffusionInput) {
@@ -780,14 +952,30 @@ export function setupUI(options) {
 
   if (pheromoneDiffusionStrengthInput) {
     pheromoneDiffusionStrengthInput.value = String(Config.pheromoneDiffusionStrength);
-    if (pheromoneDiffusionStrengthValueLabel) pheromoneDiffusionStrengthValueLabel.textContent = pheromoneDiffusionStrengthInput.value;
+    if (pheromoneDiffusionStrengthValueLabel) pheromoneDiffusionStrengthValueLabel.value = pheromoneDiffusionStrengthInput.value;
     pheromoneDiffusionStrengthInput.addEventListener("input", () => {
       const value = parseFloat(pheromoneDiffusionStrengthInput.value);
       if (!Number.isNaN(value)) {
         Config.pheromoneDiffusionStrength = value;
-        if (pheromoneDiffusionStrengthValueLabel) pheromoneDiffusionStrengthValueLabel.textContent = pheromoneDiffusionStrengthInput.value;
+        if (pheromoneDiffusionStrengthValueLabel) pheromoneDiffusionStrengthValueLabel.value = pheromoneDiffusionStrengthInput.value;
       }
     });
+    if (pheromoneDiffusionStrengthValueLabel) {
+      pheromoneDiffusionStrengthValueLabel.addEventListener("input", () => {
+        let value = parseFloat(pheromoneDiffusionStrengthValueLabel.value);
+        if (Number.isNaN(value)) return;
+        const min = pheromoneDiffusionStrengthInput.min !== "" ? parseFloat(pheromoneDiffusionStrengthInput.min) : null;
+        const max = pheromoneDiffusionStrengthInput.max !== "" ? parseFloat(pheromoneDiffusionStrengthInput.max) : null;
+        const step = pheromoneDiffusionStrengthInput.step !== "" && pheromoneDiffusionStrengthInput.step !== "any" ? parseFloat(pheromoneDiffusionStrengthInput.step) : null;
+        if (min != null && value < min) value = min;
+        if (max != null && value > max) value = max;
+        if (step != null && step > 0) {
+          value = Math.round(value / step) * step;
+        }
+        pheromoneDiffusionStrengthInput.value = String(value);
+        pheromoneDiffusionStrengthInput.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+    }
   }
 
   if (pheromoneMaxRadiusInput) {
@@ -873,14 +1061,30 @@ export function setupUI(options) {
 
   if (searcherHomePheromoneWeightInput) {
     searcherHomePheromoneWeightInput.value = String(Config.searcherHomePheromoneWeight);
-    if (searcherHomePheromoneWeightValueLabel) searcherHomePheromoneWeightValueLabel.textContent = searcherHomePheromoneWeightInput.value;
+    if (searcherHomePheromoneWeightValueLabel) searcherHomePheromoneWeightValueLabel.value = searcherHomePheromoneWeightInput.value;
     searcherHomePheromoneWeightInput.addEventListener("input", () => {
       const value = parseFloat(searcherHomePheromoneWeightInput.value);
       if (!Number.isNaN(value)) {
         Config.searcherHomePheromoneWeight = value;
-        if (searcherHomePheromoneWeightValueLabel) searcherHomePheromoneWeightValueLabel.textContent = searcherHomePheromoneWeightInput.value;
+        if (searcherHomePheromoneWeightValueLabel) searcherHomePheromoneWeightValueLabel.value = searcherHomePheromoneWeightInput.value;
       }
     });
+    if (searcherHomePheromoneWeightValueLabel) {
+      searcherHomePheromoneWeightValueLabel.addEventListener("input", () => {
+        let value = parseFloat(searcherHomePheromoneWeightValueLabel.value);
+        if (Number.isNaN(value)) return;
+        const min = searcherHomePheromoneWeightInput.min !== "" ? parseFloat(searcherHomePheromoneWeightInput.min) : null;
+        const max = searcherHomePheromoneWeightInput.max !== "" ? parseFloat(searcherHomePheromoneWeightInput.max) : null;
+        const step = searcherHomePheromoneWeightInput.step !== "" && searcherHomePheromoneWeightInput.step !== "any" ? parseFloat(searcherHomePheromoneWeightInput.step) : null;
+        if (min != null && value < min) value = min;
+        if (max != null && value > max) value = max;
+        if (step != null && step > 0) {
+          value = Math.round(value / step) * step;
+        }
+        searcherHomePheromoneWeightInput.value = String(value);
+        searcherHomePheromoneWeightInput.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+    }
   }
 
   if (skipPheromoneOnCollisionPauseInput) {
@@ -892,26 +1096,58 @@ export function setupUI(options) {
 
   if (foodRadiusInput) {
     foodRadiusInput.value = String(Config.foodSpawnRadius);
-    if (foodRadiusValueLabel) foodRadiusValueLabel.textContent = foodRadiusInput.value;
+    if (foodRadiusValueLabel) foodRadiusValueLabel.value = foodRadiusInput.value;
     foodRadiusInput.addEventListener("input", () => {
       const value = parseInt(foodRadiusInput.value, 10);
       if (!Number.isNaN(value)) {
         Config.foodSpawnRadius = value;
-        if (foodRadiusValueLabel) foodRadiusValueLabel.textContent = foodRadiusInput.value;
+        if (foodRadiusValueLabel) foodRadiusValueLabel.value = foodRadiusInput.value;
       }
     });
+    if (foodRadiusValueLabel) {
+      foodRadiusValueLabel.addEventListener("input", () => {
+        let value = parseInt(foodRadiusValueLabel.value, 10);
+        if (Number.isNaN(value)) return;
+        const min = foodRadiusInput.min !== "" ? parseInt(foodRadiusInput.min, 10) : null;
+        const max = foodRadiusInput.max !== "" ? parseInt(foodRadiusInput.max, 10) : null;
+        const step = foodRadiusInput.step !== "" && foodRadiusInput.step !== "any" ? parseInt(foodRadiusInput.step, 10) : null;
+        if (min != null && value < min) value = min;
+        if (max != null && value > max) value = max;
+        if (step != null && step > 0) {
+          value = Math.round(value / step) * step;
+        }
+        foodRadiusInput.value = String(value);
+        foodRadiusInput.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+    }
   }
 
   if (foodClusterCellSizeInput) {
     foodClusterCellSizeInput.value = String(Config.foodClusterCellSize);
-    if (foodClusterCellSizeValueLabel) foodClusterCellSizeValueLabel.textContent = foodClusterCellSizeInput.value;
+    if (foodClusterCellSizeValueLabel) foodClusterCellSizeValueLabel.value = foodClusterCellSizeInput.value;
     foodClusterCellSizeInput.addEventListener("input", () => {
       const value = parseInt(foodClusterCellSizeInput.value, 10);
       if (!Number.isNaN(value)) {
         Config.foodClusterCellSize = value;
-        if (foodClusterCellSizeValueLabel) foodClusterCellSizeValueLabel.textContent = foodClusterCellSizeInput.value;
+        if (foodClusterCellSizeValueLabel) foodClusterCellSizeValueLabel.value = foodClusterCellSizeInput.value;
       }
     });
+    if (foodClusterCellSizeValueLabel) {
+      foodClusterCellSizeValueLabel.addEventListener("input", () => {
+        let value = parseInt(foodClusterCellSizeValueLabel.value, 10);
+        if (Number.isNaN(value)) return;
+        const min = foodClusterCellSizeInput.min !== "" ? parseInt(foodClusterCellSizeInput.min, 10) : null;
+        const max = foodClusterCellSizeInput.max !== "" ? parseInt(foodClusterCellSizeInput.max, 10) : null;
+        const step = foodClusterCellSizeInput.step !== "" && foodClusterCellSizeInput.step !== "any" ? parseInt(foodClusterCellSizeInput.step, 10) : null;
+        if (min != null && value < min) value = min;
+        if (max != null && value > max) value = max;
+        if (step != null && step > 0) {
+          value = Math.round(value / step) * step;
+        }
+        foodClusterCellSizeInput.value = String(value);
+        foodClusterCellSizeInput.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+    }
   }
 
   if (foodClusterColorInput) {
@@ -951,14 +1187,30 @@ export function setupUI(options) {
 
   if (pheromoneClusterCellSizeInput) {
     pheromoneClusterCellSizeInput.value = String(Config.pheromoneClusterCellSize);
-    if (pheromoneClusterCellSizeValueLabel) pheromoneClusterCellSizeValueLabel.textContent = pheromoneClusterCellSizeInput.value;
+    if (pheromoneClusterCellSizeValueLabel) pheromoneClusterCellSizeValueLabel.value = pheromoneClusterCellSizeInput.value;
     pheromoneClusterCellSizeInput.addEventListener("input", () => {
       const value = parseInt(pheromoneClusterCellSizeInput.value, 10);
       if (!Number.isNaN(value)) {
         Config.pheromoneClusterCellSize = value;
-        if (pheromoneClusterCellSizeValueLabel) pheromoneClusterCellSizeValueLabel.textContent = pheromoneClusterCellSizeInput.value;
+        if (pheromoneClusterCellSizeValueLabel) pheromoneClusterCellSizeValueLabel.value = pheromoneClusterCellSizeInput.value;
       }
     });
+    if (pheromoneClusterCellSizeValueLabel) {
+      pheromoneClusterCellSizeValueLabel.addEventListener("input", () => {
+        let value = parseInt(pheromoneClusterCellSizeValueLabel.value, 10);
+        if (Number.isNaN(value)) return;
+        const min = pheromoneClusterCellSizeInput.min !== "" ? parseInt(pheromoneClusterCellSizeInput.min, 10) : null;
+        const max = pheromoneClusterCellSizeInput.max !== "" ? parseInt(pheromoneClusterCellSizeInput.max, 10) : null;
+        const step = pheromoneClusterCellSizeInput.step !== "" && pheromoneClusterCellSizeInput.step !== "any" ? parseInt(pheromoneClusterCellSizeInput.step, 10) : null;
+        if (min != null && value < min) value = min;
+        if (max != null && value > max) value = max;
+        if (step != null && step > 0) {
+          value = Math.round(value / step) * step;
+        }
+        pheromoneClusterCellSizeInput.value = String(value);
+        pheromoneClusterCellSizeInput.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+    }
   }
 
   if (bgColorInput) {
@@ -1213,15 +1465,31 @@ export function setupUI(options) {
 
   if (mapColorToleranceInput) {
     mapColorToleranceInput.value = String(Config.mapColorTolerance != null ? Config.mapColorTolerance : 60);
-    if (mapColorToleranceValueLabel) mapColorToleranceValueLabel.textContent = mapColorToleranceInput.value;
+    if (mapColorToleranceValueLabel) mapColorToleranceValueLabel.value = mapColorToleranceInput.value;
     mapColorToleranceInput.addEventListener("input", () => {
       const value = parseFloat(mapColorToleranceInput.value);
       if (!Number.isNaN(value)) {
         Config.mapColorTolerance = value;
-        if (mapColorToleranceValueLabel) mapColorToleranceValueLabel.textContent = mapColorToleranceInput.value;
+        if (mapColorToleranceValueLabel) mapColorToleranceValueLabel.value = mapColorToleranceInput.value;
         resetSimulation();
       }
     });
+    if (mapColorToleranceValueLabel) {
+      mapColorToleranceValueLabel.addEventListener("input", () => {
+        let value = parseFloat(mapColorToleranceValueLabel.value);
+        if (Number.isNaN(value)) return;
+        const min = mapColorToleranceInput.min !== "" ? parseFloat(mapColorToleranceInput.min) : null;
+        const max = mapColorToleranceInput.max !== "" ? parseFloat(mapColorToleranceInput.max) : null;
+        const step = mapColorToleranceInput.step !== "" && mapColorToleranceInput.step !== "any" ? parseFloat(mapColorToleranceInput.step) : null;
+        if (min != null && value < min) value = min;
+        if (max != null && value > max) value = max;
+        if (step != null && step > 0) {
+          value = Math.round(value / step) * step;
+        }
+        mapColorToleranceInput.value = String(value);
+        mapColorToleranceInput.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+    }
   }
 
   if (mapFoodColorToleranceInput) {
@@ -1290,16 +1558,32 @@ export function setupUI(options) {
   if (mapPaletteMinDistanceInput) {
     const initial = Config.mapPaletteMinDistance != null ? Config.mapPaletteMinDistance : (Config.mapColorTolerance != null ? Config.mapColorTolerance : 60);
     mapPaletteMinDistanceInput.value = String(initial);
-    if (mapPaletteMinDistanceValueLabel) mapPaletteMinDistanceValueLabel.textContent = mapPaletteMinDistanceInput.value;
+    if (mapPaletteMinDistanceValueLabel) mapPaletteMinDistanceValueLabel.value = mapPaletteMinDistanceInput.value;
     mapPaletteMinDistanceInput.addEventListener("input", () => {
       const value = parseFloat(mapPaletteMinDistanceInput.value);
       if (!Number.isNaN(value)) {
         Config.mapPaletteMinDistance = value;
-        if (mapPaletteMinDistanceValueLabel) mapPaletteMinDistanceValueLabel.textContent = mapPaletteMinDistanceInput.value;
+        if (mapPaletteMinDistanceValueLabel) mapPaletteMinDistanceValueLabel.value = mapPaletteMinDistanceInput.value;
         // Recompute palette + image map on next reset.
         resetSimulation();
       }
     });
+    if (mapPaletteMinDistanceValueLabel) {
+      mapPaletteMinDistanceValueLabel.addEventListener("input", () => {
+        let value = parseFloat(mapPaletteMinDistanceValueLabel.value);
+        if (Number.isNaN(value)) return;
+        const min = mapPaletteMinDistanceInput.min !== "" ? parseFloat(mapPaletteMinDistanceInput.min) : null;
+        const max = mapPaletteMinDistanceInput.max !== "" ? parseFloat(mapPaletteMinDistanceInput.max) : null;
+        const step = mapPaletteMinDistanceInput.step !== "" && mapPaletteMinDistanceInput.step !== "any" ? parseFloat(mapPaletteMinDistanceInput.step) : null;
+        if (min != null && value < min) value = min;
+        if (max != null && value > max) value = max;
+        if (step != null && step > 0) {
+          value = Math.round(value / step) * step;
+        }
+        mapPaletteMinDistanceInput.value = String(value);
+        mapPaletteMinDistanceInput.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+    }
   }
 
   if (mapFoodRenderCellsOnlyInput) {
@@ -1641,40 +1925,7 @@ export function setupUI(options) {
     });
   }
 
-  // Make slider value labels clickable for direct numeric entry.
   if (uiPanel) {
-    const controls = uiPanel.querySelectorAll(".control");
-    controls.forEach((control) => {
-      const range = control.querySelector("input[type='range']");
-      const valueSpan = control.querySelector(".value");
-      if (!range || !valueSpan) return;
-
-      valueSpan.classList.add("editable-value");
-      valueSpan.title = "Click to enter a specific value";
-
-      valueSpan.addEventListener("click", () => {
-        const current = range.value;
-        const min = range.min !== "" ? parseFloat(range.min) : null;
-        const max = range.max !== "" ? parseFloat(range.max) : null;
-        const step = range.step !== "" && range.step !== "any" ? parseFloat(range.step) : null;
-
-        const result = window.prompt("Enter value", current);
-        if (result == null) return;
-        let v = parseFloat(result);
-        if (Number.isNaN(v)) return;
-
-        if (min != null && v < min) v = min;
-        if (max != null && v > max) v = max;
-        if (step != null && step > 0) {
-          v = Math.round(v / step) * step;
-        }
-
-        range.value = String(v);
-        // Reuse existing input handlers to update Config + labels.
-        range.dispatchEvent(new Event("input", { bubbles: true }));
-      });
-    });
-
     // Collapsible sections: clicking the header toggles visibility.
     const sectionHeaders = uiPanel.querySelectorAll(".ui-section-header");
     sectionHeaders.forEach((header) => {
@@ -1777,6 +2028,32 @@ export function setUIPanelVisible(visible) {
   uiPanel.style.display = visible ? "block" : "none";
 }
 
+export function setUIPhase(isPrestart) {
+  if (!uiPanel) return;
+  const phaseKey = isPrestart ? "prestart" : "running";
+  const phaseConfig = UIPhaseConfig[phaseKey];
+  if (!phaseConfig || !phaseConfig.sections) return;
+
+  const sections = uiPanel.querySelectorAll(".ui-section");
+  sections.forEach((section) => {
+    const id = section.getAttribute("data-section") || "";
+    const cfg = phaseConfig.sections[id];
+    if (!cfg) return;
+
+    if (cfg.visible === false) {
+      section.classList.add("hidden");
+    } else {
+      section.classList.remove("hidden");
+    }
+
+    if (cfg.collapsed) {
+      section.classList.add("collapsed");
+    } else {
+      section.classList.remove("collapsed");
+    }
+  });
+}
+
 export function syncHUDUI() {
   if (showHUDInput) {
     showHUDInput.checked = !!Config.showHUD;
@@ -1790,27 +2067,27 @@ export function refreshUIFromConfig() {
   // Ants
   if (antCountInput) {
     antCountInput.value = String(Config.antCount);
-    if (antCountValueLabel) antCountValueLabel.textContent = antCountInput.value;
+    if (antCountValueLabel) antCountValueLabel.value = antCountInput.value;
   }
   if (antSpeedInput) {
     antSpeedInput.value = String(Config.antSpeed);
-    if (antSpeedValueLabel) antSpeedValueLabel.textContent = antSpeedInput.value;
+    if (antSpeedValueLabel) antSpeedValueLabel.value = antSpeedInput.value;
   }
   if (antSteeringStrengthInput) {
     antSteeringStrengthInput.value = String(Config.antSteeringStrength);
-    if (antSteeringStrengthValueLabel) antSteeringStrengthValueLabel.textContent = antSteeringStrengthInput.value;
+    if (antSteeringStrengthValueLabel) antSteeringStrengthValueLabel.value = antSteeringStrengthInput.value;
   }
   if (antFoVInput) {
     antFoVInput.value = String(Config.antFoVDegrees);
-    if (antFoVValueLabel) antFoVValueLabel.textContent = antFoVInput.value;
+    if (antFoVValueLabel) antFoVValueLabel.value = antFoVInput.value;
   }
   if (antWanderStrengthInput) {
     antWanderStrengthInput.value = String(Config.antWanderStrength);
-    if (antWanderStrengthValueLabel) antWanderStrengthValueLabel.textContent = antWanderStrengthInput.value;
+    if (antWanderStrengthValueLabel) antWanderStrengthValueLabel.value = antWanderStrengthInput.value;
   }
   if (antSightInput) {
     antSightInput.value = String(Config.antSight);
-    if (antSightValueLabel) antSightValueLabel.textContent = antSightInput.value;
+    if (antSightValueLabel) antSightValueLabel.value = antSightInput.value;
   }
   if (antHeadingQuantizationSelect) {
     const dirs = Config.antHeadingQuantizationDirections != null ? Config.antHeadingQuantizationDirections : 0;
@@ -1872,7 +2149,7 @@ export function refreshUIFromConfig() {
   // Simulation & world
   if (simulationSpeedInput) {
     simulationSpeedInput.value = String(Config.simulationSpeed);
-    if (simulationSpeedValueLabel) simulationSpeedValueLabel.textContent = simulationSpeedInput.value;
+    if (simulationSpeedValueLabel) simulationSpeedValueLabel.value = simulationSpeedInput.value;
   }
   if (simWidthInput) {
     simWidthInput.value = String(Config.simulationWidth);
@@ -1908,7 +2185,7 @@ export function refreshUIFromConfig() {
   // Pheromones
   if (pheromoneLifeInput) {
     pheromoneLifeInput.value = String(Config.pheromoneLife);
-    if (pheromoneLifeValueLabel) pheromoneLifeValueLabel.textContent = pheromoneLifeInput.value;
+    if (pheromoneLifeValueLabel) pheromoneLifeValueLabel.value = pheromoneLifeInput.value;
   }
   if (redPheromoneLifeInput) {
     const life = Config.redPheromoneLife != null ? Config.redPheromoneLife : "";
@@ -1920,18 +2197,18 @@ export function refreshUIFromConfig() {
   }
   if (pheromoneLowScoreThresholdInput) {
     pheromoneLowScoreThresholdInput.value = String(Config.pheromoneLowScoreThreshold);
-    if (pheromoneLowScoreThresholdValueLabel) pheromoneLowScoreThresholdValueLabel.textContent = pheromoneLowScoreThresholdInput.value;
+    if (pheromoneLowScoreThresholdValueLabel) pheromoneLowScoreThresholdValueLabel.value = pheromoneLowScoreThresholdInput.value;
   }
   if (pheromoneIgnoreProbabilityInput) {
     pheromoneIgnoreProbabilityInput.value = String(Config.pheromoneIgnoreProbability);
-    if (pheromoneIgnoreProbabilityValueLabel) pheromoneIgnoreProbabilityValueLabel.textContent = pheromoneIgnoreProbabilityInput.value;
+    if (pheromoneIgnoreProbabilityValueLabel) pheromoneIgnoreProbabilityValueLabel.value = pheromoneIgnoreProbabilityInput.value;
   }
   if (pheromoneDiffusionInput) {
     pheromoneDiffusionInput.checked = !!Config.pheromoneDiffusionEnabled;
   }
   if (pheromoneDiffusionStrengthInput) {
     pheromoneDiffusionStrengthInput.value = String(Config.pheromoneDiffusionStrength);
-    if (pheromoneDiffusionStrengthValueLabel) pheromoneDiffusionStrengthValueLabel.textContent = pheromoneDiffusionStrengthInput.value;
+    if (pheromoneDiffusionStrengthValueLabel) pheromoneDiffusionStrengthValueLabel.value = pheromoneDiffusionStrengthInput.value;
   }
   if (pheromoneMaxRadiusInput) {
     const val = Config.pheromoneMaxRadius != null ? Config.pheromoneMaxRadius : "";
@@ -1970,7 +2247,7 @@ export function refreshUIFromConfig() {
   }
   if (searcherHomePheromoneWeightInput) {
     searcherHomePheromoneWeightInput.value = String(Config.searcherHomePheromoneWeight);
-    if (searcherHomePheromoneWeightValueLabel) searcherHomePheromoneWeightValueLabel.textContent = searcherHomePheromoneWeightInput.value;
+    if (searcherHomePheromoneWeightValueLabel) searcherHomePheromoneWeightValueLabel.value = searcherHomePheromoneWeightInput.value;
   }
   if (skipPheromoneOnCollisionPauseInput) {
     skipPheromoneOnCollisionPauseInput.checked = !!Config.skipPheromoneOnCollisionPause;
@@ -1979,15 +2256,15 @@ export function refreshUIFromConfig() {
   // Food & obstacles
   if (foodRadiusInput) {
     foodRadiusInput.value = String(Config.foodSpawnRadius);
-    if (foodRadiusValueLabel) foodRadiusValueLabel.textContent = foodRadiusInput.value;
+    if (foodRadiusValueLabel) foodRadiusValueLabel.value = foodRadiusInput.value;
   }
   if (foodClusterCellSizeInput) {
     foodClusterCellSizeInput.value = String(Config.foodClusterCellSize);
-    if (foodClusterCellSizeValueLabel) foodClusterCellSizeValueLabel.textContent = foodClusterCellSizeInput.value;
+    if (foodClusterCellSizeValueLabel) foodClusterCellSizeValueLabel.value = foodClusterCellSizeInput.value;
   }
   if (pheromoneClusterCellSizeInput) {
     pheromoneClusterCellSizeInput.value = String(Config.pheromoneClusterCellSize);
-    if (pheromoneClusterCellSizeValueLabel) pheromoneClusterCellSizeValueLabel.textContent = pheromoneClusterCellSizeInput.value;
+    if (pheromoneClusterCellSizeValueLabel) pheromoneClusterCellSizeValueLabel.value = pheromoneClusterCellSizeInput.value;
   }
   if (foodClusterColorInput) {
     foodClusterColorInput.value = Config.foodClusterColor || "#00ff00";
@@ -2083,7 +2360,7 @@ export function refreshUIFromConfig() {
   }
   if (mapColorToleranceInput) {
     mapColorToleranceInput.value = String(Config.mapColorTolerance != null ? Config.mapColorTolerance : 60);
-    if (mapColorToleranceValueLabel) mapColorToleranceValueLabel.textContent = mapColorToleranceInput.value;
+    if (mapColorToleranceValueLabel) mapColorToleranceValueLabel.value = mapColorToleranceInput.value;
   }
   if (mapFoodColorToleranceInput) {
     const val = Config.mapFoodColorTolerance != null ? Config.mapFoodColorTolerance : "";
@@ -2100,7 +2377,7 @@ export function refreshUIFromConfig() {
   if (mapPaletteMinDistanceInput) {
     const initial = Config.mapPaletteMinDistance != null ? Config.mapPaletteMinDistance : (Config.mapColorTolerance != null ? Config.mapColorTolerance : 60);
     mapPaletteMinDistanceInput.value = String(initial);
-    if (mapPaletteMinDistanceValueLabel) mapPaletteMinDistanceValueLabel.textContent = mapPaletteMinDistanceInput.value;
+    if (mapPaletteMinDistanceValueLabel) mapPaletteMinDistanceValueLabel.value = mapPaletteMinDistanceInput.value;
   }
   if (mapObstacleDilateIterationsInput) {
     mapObstacleDilateIterationsInput.value = String(Config.mapObstacleDilateIterations != null ? Config.mapObstacleDilateIterations : 0);

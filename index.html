@@ -26,37 +26,37 @@
                     <div class="control">
                         <label for="antCount">Ant count</label>
                         <input id="antCount" type="range" min="10" max="300" step="1">
-                        <span id="antCountValue" class="value"></span>
+                        <input id="antCountValue" class="value" type="number" min="10" max="300" step="1">
                     </div>
 
                     <div class="control">
                         <label for="antSpeed">Ant speed</label>
                         <input id="antSpeed" type="range" min="1" max="30" step="1">
-                        <span id="antSpeedValue" class="value"></span>
+                        <input id="antSpeedValue" class="value" type="number" min="1" max="30" step="1">
                     </div>
 
                     <div class="control">
                         <label for="antSteeringStrength">Steering strength</label>
                         <input id="antSteeringStrength" type="range" min="0" max="2" step="0.05">
-                        <span id="antSteeringStrengthValue" class="value"></span>
+                        <input id="antSteeringStrengthValue" class="value" type="number" min="0" max="2" step="0.05">
                     </div>
 
                     <div class="control">
                         <label for="antFoV">FoV</label>
                         <input id="antFoV" type="range" min="30" max="180" step="5">
-                        <span id="antFoVValue" class="value"></span>
+                        <input id="antFoVValue" class="value" type="number" min="30" max="180" step="5">
                     </div>
 
                     <div class="control">
                         <label for="antWanderStrength">Wander strength</label>
                         <input id="antWanderStrength" type="range" min="0" max="0.2" step="0.005">
-                        <span id="antWanderStrengthValue" class="value"></span>
+                        <input id="antWanderStrengthValue" class="value" type="number" min="0" max="0.2" step="0.005">
                     </div>
 
                     <div class="control">
                         <label for="antSight">Sight</label>
                         <input id="antSight" type="range" min="20" max="300" step="5">
-                        <span id="antSightValue" class="value"></span>
+                        <input id="antSightValue" class="value" type="number" min="20" max="300" step="5">
                     </div>
 
                     <div class="control prestart-only control-inline">
@@ -180,7 +180,7 @@
                     <div class="control">
                         <label for="simulationSpeed">Simulation speed</label>
                         <input id="simulationSpeed" type="range" min="0.1" max="3" step="0.1">
-                        <span id="simulationSpeedValue" class="value"></span>
+                        <input id="simulationSpeedValue" class="value" type="number" min="0.1" max="3" step="0.1">
                     </div>
 
                     <div class="control control-inline">
@@ -244,7 +244,7 @@
                     <div class="control">
                         <label for="pheromoneLife">Pheromone lifetime</label>
                         <input id="pheromoneLife" type="range" min="100" max="2000" step="50">
-                        <span id="pheromoneLifeValue" class="value"></span>
+                        <input id="pheromoneLifeValue" class="value" type="number" min="100" max="2000" step="50">
                     </div>
 
                     <div class="control prestart-only control-inline">
@@ -260,13 +260,13 @@
                     <div class="control">
                         <label for="pheromoneLowScoreThreshold">Pheromone low-score threshold</label>
                         <input id="pheromoneLowScoreThreshold" type="range" min="0" max="1" step="0.01">
-                        <span id="pheromoneLowScoreThresholdValue" class="value"></span>
+                        <input id="pheromoneLowScoreThresholdValue" class="value" type="number" min="0" max="1" step="0.01">
                     </div>
 
                     <div class="control">
                         <label for="pheromoneIgnoreProbability">Ignore weak pheromones (probability)</label>
                         <input id="pheromoneIgnoreProbability" type="range" min="0" max="1" step="0.05">
-                        <span id="pheromoneIgnoreProbabilityValue" class="value"></span>
+                        <input id="pheromoneIgnoreProbabilityValue" class="value" type="number" min="0" max="1" step="0.05">
                     </div>
 
                     <div class="control">
@@ -276,7 +276,7 @@
                     <div class="control">
                         <label for="pheromoneDiffusionStrength">Pheromone diffusion strength</label>
                         <input id="pheromoneDiffusionStrength" type="range" min="0" max="2" step="0.1">
-                        <span id="pheromoneDiffusionStrengthValue" class="value"></span>
+                        <input id="pheromoneDiffusionStrengthValue" class="value" type="number" min="0" max="2" step="0.1">
                     </div>
 
                     <div class="control prestart-only control-inline">
@@ -314,7 +314,7 @@
                     <div class="control prestart-only">
                         <label for="searcherHomePheromoneWeight">Home pheromone weight (searchers)</label>
                         <input id="searcherHomePheromoneWeight" type="range" min="0" max="2" step="0.1">
-                        <span id="searcherHomePheromoneWeightValue" class="value"></span>
+                        <input id="searcherHomePheromoneWeightValue" class="value" type="number" min="0" max="2" step="0.1">
                     </div>
 
                     <div class="control prestart-only">
@@ -338,7 +338,7 @@
                     <div class="control">
                         <label for="pheromoneClusterCellSize">Pheromone cluster cell size</label>
                         <input id="pheromoneClusterCellSize" type="range" min="2" max="20" step="2">
-                        <span id="pheromoneClusterCellSizeValue" class="value"></span>
+                        <input id="pheromoneClusterCellSizeValue" class="value" type="number" min="2" max="20" step="2">
                     </div>
 
                     <div class="control">
@@ -358,13 +358,13 @@
                     <div class="control">
                         <label for="foodRadius">Food radius</label>
                         <input id="foodRadius" type="range" min="10" max="150" step="1">
-                        <span id="foodRadiusValue" class="value"></span>
+                        <input id="foodRadiusValue" class="value" type="number" min="10" max="150" step="1">
                     </div>
 
                     <div class="control">
                         <label for="foodClusterCellSize">Food cluster cell size</label>
                         <input id="foodClusterCellSize" type="range" min="2" max="20" step="2">
-                        <span id="foodClusterCellSizeValue" class="value"></span>
+                        <input id="foodClusterCellSizeValue" class="value" type="number" min="2" max="20" step="2">
                     </div>
 
                     <div class="control">
@@ -517,7 +517,7 @@
                     <div class="control">
                         <label for="mapPaletteMinDistance">Palette min distance</label>
                         <input id="mapPaletteMinDistance" type="range" min="0" max="300" step="1">
-                        <span id="mapPaletteMinDistanceValue" class="value"></span>
+                        <input id="mapPaletteMinDistanceValue" class="value" type="number" min="0" max="300" step="1">
                     </div>
 
 
@@ -550,7 +550,7 @@
                     <div class="control">
                         <label for="mapColorTolerance">Map color tolerance</label>
                         <input id="mapColorTolerance" type="range" min="0" max="300" step="1">
-                        <span id="mapColorToleranceValue" class="value"></span>
+                        <input id="mapColorToleranceValue" class="value" type="number" min="0" max="300" step="1">
                     </div>
 
                     <div class="control prestart-only control-inline">
